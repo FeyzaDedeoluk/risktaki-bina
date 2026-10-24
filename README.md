@@ -52,19 +52,38 @@ Model dosyası (`best.pt`) boyutu nedeniyle ayrıca eklenir. Eğitim Google Cola
 
 ## Uygulama
 
-`index.html` tek dosyalık mobil uygulama prototipidir. Telefona "Ana ekrana ekle" ile kurulabilir (PWA).
+`index.html` mobil uygulama prototipidir (PWA: telefona "Ana ekrana ekle" ile kurulur, APK olarak da derlenir).
 
-- Sürüklenip yakınlaştırılan harita, risk renkli pinler ve kümeleme
-- Bina arama, filtreler, risk sıralı liste
+- Gerçek harita (Leaflet + OpenStreetMap): sürükleni­r, yakınlaştırılır, konuma gidilir
+- Risk renkli pinler ve kümeleme, bina arama, filtreler, risk veya yakınlık sıralı liste
 - Bina kartı: skorun nedeni, şematik çatlak çizimi, ne yapılmalı
-- Vatandaş ve Belediye görünümleri (denetim durumu, not)
+- Vatandaş, Belediye (denetim durumu, not, bekleyen filtresi) ve AFAD (mahalle risk özeti) görünümleri
+- **Fotoğraf analizi:** fotoğraf seçilir, çatlaklar cihazda işaretlenir ve skor hesaplanır (`model.onnx` gerekir)
+- **Rapor:** tek bina raporu veya yüksek riskli binalar listesi, PDF veya resim olarak
 - Skor hesaplayıcı
 
-**Önemli:** Haritadaki şehir, binalar ve değerler prototip için uydurulmuş örnek veridir. Harita arka planı kodla çizilmiştir. Gerçek harita altlığı (OpenStreetMap) uygulama aşamasında eklenecektir.
+### Gerçek veri akışı
+
+1. `python risk_skor.py --bina-listesi binalar.csv --model best.pt --cikti sonuc.json`
+2. Uygulamada **Araçlar › Veri yükle** ile `sonuc.json` seçilir (cihazda saklanır), ya da dosya depoya `binalar.json` adıyla konur.
+3. Veri yoksa uygulama, "ÖRNEK VERİ" etiketli uydurma binalar gösterir.
+
+`binalar.csv` sütunları: `ad,klasor,yil,pga,enlem,boylam` (isteğe bağlı: `adres,mahalle,kat`).
+
+### Model dosyası (fotoğraf analizi için)
+
+```python
+from ultralytics import YOLO
+YOLO('best.pt').export(format='onnx', imgsz=640, simplify=False, opset=12)
+```
+
+Çıkan dosya `model.onnx` adıyla depoya (index.html ile aynı klasöre) yüklenir.
+
+**Önemli:** Örnek verideki binalar ve değerler uydurmadır. Harita altlığı OpenStreetMap'tir, yoğun kullanım için kendi harita sağlayıcısı gerekir.
 
 ## Yayınlama
 
-**GitHub Pages:** Settings → Pages → Branch: `main`, klasör `/ (root)` → Save. Adres: `https://feyzadedeoluk.github.io/risktaki-bina/`
+**GitHub Pages:** Settings → Pages → Branch: `main`, klasör `/ (root)` → Save. Adres: `https://<kullanici>.github.io/risktaki-bina/`
 
 **APK:** Actions sekmesi → "APK derle" → Run workflow. Bitince çalışmanın altındaki `risktaki-bina-apk` dosyasını indir.
 
