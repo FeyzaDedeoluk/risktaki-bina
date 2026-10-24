@@ -7,13 +7,14 @@ Kullanim:
   python risk_skor.py --gorseller foto_klasoru --model best.pt --yil 1985 --pga 0.45 --ad "Bina-1"
   python risk_skor.py --bina-listesi binalar.csv --model best.pt --cikti sonuc.json
 
-binalar.csv sutunlari: ad,klasor,yil,pga,enlem,boylam
+binalar.csv sutunlari: ad,klasor,yil,pga,enlem,boylam   (istege bagli: adres,mahalle,kat)
 (pga yoksa 'bolge' sutunu 1-5 verilebilir)
+Cikti (sonuc.json) uygulamada Araclar > Veri yukle ile secilebilir ya da depoya binalar.json adiyla konabilir.
 
 Skor = Catlak (0-40) + Deprem Tehlikesi (0-35) + Bina Yasi (0-25)
   0-40 Dusuk (yesil) | 41-70 Orta (sari) | 71-100 Yuksek (kirmizi)
 """
-import argparse, csv, json, os, sys
+import argparse, csv, datetime, json, os, sys
 
 UZANTILAR = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
 
@@ -29,6 +30,14 @@ def catlak_skoru(kutular, goruntu_alani, goruntu_sayisi=1):
     sayi_ort = len(kutular) / goruntu_sayisi
     sayi_n = min(1.0, sayi_ort / 5.0)           # goruntu basi 5 catlak = tam puan
     return round(40 * (0.6 * kapsama_n + 0.4 * sayi_n), 1)
+
+
+def catlak_ozet(kutular, goruntu_alani, goruntu_sayisi=1):
+    """Uygulamada gosterilen degerler: kapsama yuzdesi ve foto basina ortalama catlak sayisi."""
+    if goruntu_sayisi <= 0 or goruntu_alani <= 0:
+        return 0.0, 0.0
+    kapsama = sum(a * c for a, c in kutular) / (goruntu_alani * goruntu_sayisi)
+    return round(kapsama * 100, 2), round(len(kutular) / goruntu_sayisi, 2)
 
 
 def tehlike_skoru(pga=None, bolge=None):
@@ -101,15 +110,22 @@ def goruntu_analiz(yollar, model_yolu, esik=0.25, kayit_klasoru=None):
     return kutular, (alan_ort / n if n else 0), n
 
 
-def bina_analiz(ad, klasor, model_yolu, yil, pga=None, bolge=None, enlem=None, boylam=None, esik=0.25, kayit=None):
+def bina_analiz(ad, klasor, model_yolu, yil, pga=None, bolge=None, enlem=None, boylam=None, esik=0.25, kayit=None,
+                adres="", mahalle="", kat=None):
     yollar = klasorden_goruntuler(klasor)
     kutular, alan, n = goruntu_analiz(yollar, model_yolu, esik, kayit)
     c = catlak_skoru(kutular, alan, n)
     t = tehlike_skoru(pga, bolge)
     y = yas_skoru(yil)
     r = risk_hesapla(c, t, y)
+    cov, n_ort = catlak_ozet(kutular, alan, n)
+    if pga is None and bolge is not None:
+        pga = round({1: 0.80, 2: 0.61, 3: 0.43, 4: 0.24, 5: 0.13}[int(bolge)], 2)
     r.update({"ad": ad, "yil": int(yil), "pga": pga, "bolge": bolge, "enlem": enlem, "boylam": boylam,
-              "goruntu_sayisi": n, "tespit_sayisi": len(kutular)})
+              "goruntu_sayisi": n, "tespit_sayisi": len(kutular),
+              # uygulamanin okudugu alanlar
+              "adr": adres, "mh": mahalle, "kat": kat, "cov": cov, "n": n_ort, "foto": n,
+              "lat": enlem, "lon": boylam, "tarih": datetime.date.today().strftime("%d.%m.%Y")})
     return r
 
 
@@ -121,7 +137,7 @@ def main():
     p.add_argument("--yil", type=int, help="yapim yili")
     p.add_argument("--pga", type=float)
     p.add_argument("--bolge", type=int)
-    p.add_argument("--bina-listesi", help="csv: ad,klasor,yil,pga,enlem,boylam")
+    p.add_argument("--bina-listesi", help="csv: ad,klasor,yil,pga,enlem,boylam[,adres,mahalle,kat]")
     p.add_argument("--esik", type=float, default=0.25, help="YOLO guven esigi")
     p.add_argument("--cikti", default="sonuc.json")
     p.add_argument("--isaretli", default="isaretli_gorseller", help="tespit cizili foto klasoru")
@@ -137,7 +153,9 @@ def main():
                     int(s["bolge"]) if s.get("bolge") else None,
                     float(s["enlem"]) if s.get("enlem") else None,
                     float(s["boylam"]) if s.get("boylam") else None,
-                    a.esik, os.path.join(a.isaretli, s["ad"])))
+                    a.esik, os.path.join(a.isaretli, s["ad"]),
+                    s.get("adres", ""), s.get("mahalle", ""),
+                    int(s["kat"]) if s.get("kat") else None))
     elif a.gorseller and a.yil:
         sonuclar.append(bina_analiz(a.ad, a.gorseller, a.model, a.yil, a.pga, a.bolge,
                                     esik=a.esik, kayit=os.path.join(a.isaretli, a.ad)))
