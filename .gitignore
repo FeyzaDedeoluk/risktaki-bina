@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.env
+runs/
+datasets/
+*.zip
+node_modules/
+android/
+www/
+package.json
+package-lock.json
+isaretli_gorseller/
+sonuc.json
