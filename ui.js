@@ -338,18 +338,32 @@ function fotoSonuc() {
     <p class="ph-note">Bu fotoğrafta ${ph.n} çatlak bulundu, görüntü alanının %${f1(ph.cov)}’i çatlaklı. Tek fotoğrafla yapılan bu hesap yalnızca deneme içindir. Gerçek skor bir binanın tüm fotoğraflarından hesaplanır.</p>`;
 }
 ['phYil', 'phPga'].forEach(i => $(i).addEventListener('input', fotoSonuc));
-let phRaw = null;
+let phRaw = null, phImg = null, phSc = 1, phSel = null;
+function phDraw() {
+  if (!phImg) return;
+  const cv = $('phCanvas'), c = cv.getContext('2d'), conf = +$('phConf').value;
+  c.drawImage(phImg, 0, 0, cv.width, cv.height);
+  if (phSel) {
+    c.fillStyle = 'rgba(0,0,0,.5)';
+    c.fillRect(0, 0, cv.width, phSel.y); c.fillRect(0, phSel.y + phSel.h, cv.width, cv.height - phSel.y - phSel.h);
+    c.fillRect(0, phSel.y, phSel.x, phSel.h); c.fillRect(phSel.x + phSel.w, phSel.y, cv.width - phSel.x - phSel.w, phSel.h);
+    c.lineWidth = Math.max(2, cv.width / 260); c.strokeStyle = '#4da3ff'; c.setLineDash([10, 6]);
+    c.strokeRect(phSel.x, phSel.y, phSel.w, phSel.h); c.setLineDash([]);
+  }
+  if (phRaw) {
+    c.lineWidth = Math.max(2, cv.width / 220); c.strokeStyle = '#ff3b3b'; c.fillStyle = '#ff3b3b'; c.font = `600 ${Math.max(12, cv.width / 45)}px sans-serif`;
+    phRaw.res.boxes.filter(b => b.score >= conf).forEach(b => {
+      const x = (phRaw.off.x + b.x1) * phSc, y = (phRaw.off.y + b.y1) * phSc, w = (b.x2 - b.x1) * phSc, h = (b.y2 - b.y1) * phSc;
+      c.strokeRect(x, y, w, h); c.fillText(b.score.toFixed(2), x + 3, Math.max(14, y - 5));
+    });
+  }
+}
 function fotoCiz() {
-  if (!phRaw) return;
-  const conf = +$('phConf').value; $('oConf').textContent = conf.toFixed(2).replace('.', ',');
-  const { img, res, sc } = phRaw, cv = $('phCanvas'), c = cv.getContext('2d');
-  c.drawImage(img, 0, 0, cv.width, cv.height);
+  $('oConf').textContent = (+$('phConf').value).toFixed(2).replace('.', ',');
+  if (!phRaw) { phDraw(); return; }
+  const conf = +$('phConf').value, res = phRaw.res;
   const boxes = res.boxes.filter(b => b.score >= conf);
-  c.lineWidth = Math.max(2, cv.width / 220); c.strokeStyle = '#ff3b3b'; c.fillStyle = '#ff3b3b'; c.font = `600 ${Math.max(12, cv.width / 45)}px sans-serif`;
-  boxes.forEach(b => {
-    const x = b.x1 * sc, y = b.y1 * sc, w = (b.x2 - b.x1) * sc, h = (b.y2 - b.y1) * sc;
-    c.strokeRect(x, y, w, h); c.fillText(b.score.toFixed(2), x + 3, Math.max(14, y - 5));
-  });
+  phDraw();
   ph = tespitOzeti({ boxes, w: res.w, h: res.h });
   const t = conf.toFixed(2).replace('.', ',');
   $('phNote').className = 'ph-note';
@@ -357,28 +371,65 @@ function fotoCiz() {
   fotoSonuc();
 }
 $('phConf').addEventListener('input', fotoCiz);
+
+async function phAnaliz() {
+  if (!phImg) return;
+  const W = phImg.naturalWidth, H = phImg.naturalHeight;
+  let sx = 0, sy = 0, sw = W, sh = H;
+  if (phSel && phSel.w > 20 && phSel.h > 20) {
+    sx = Math.max(0, Math.round(phSel.x / phSc)); sy = Math.max(0, Math.round(phSel.y / phSc));
+    sw = Math.min(W - sx, Math.round(phSel.w / phSc)); sh = Math.min(H - sy, Math.round(phSel.h / phSc));
+  }
+  const cr = document.createElement('canvas'); cr.width = sw; cr.height = sh;
+  cr.getContext('2d').drawImage(phImg, sx, sy, sw, sh, 0, 0, sw, sh);
+  $('phOut').innerHTML = ''; ph = null; phRaw = null; phDraw();
+  $('phNote').className = 'ph-note';
+  $('phNote').textContent = 'Model çalışıyor… (ilk seferde model yüklendiği için biraz sürer)';
+  try {
+    const res = await aiTespit(cr, 0.1);
+    phRaw = { res, off: { x: sx, y: sy } };
+    fotoCiz();
+  } catch (err) {
+    $('phNote').className = 'ph-err';
+    $('phNote').textContent = err.message === 'MODEL_YOK'
+      ? 'Model dosyası (model.onnx) uygulamada yok. Ekibin eğitilmiş modeli depoya eklenince bu özellik çalışır.'
+      : String(err.message).startsWith('BETIK') ? 'Model çalıştırıcısı yüklenemedi. İnternet bağlantını kontrol et.'
+      : 'Analiz yapılamadı: ' + err.message;
+  }
+}
+$('phRun').onclick = phAnaliz;
+$('phClr').onclick = () => { phSel = null; phRaw = null; ph = null; $('phOut').innerHTML = ''; $('phNote').textContent = 'Seçim temizlendi. Tüm fotoğraf taranacak.'; phDraw(); };
+(function phSelect() {
+  const cv = $('phCanvas'); let st = null;
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: Math.max(0, Math.min(cv.width, (e.clientX - r.left) * cv.width / r.width)), y: Math.max(0, Math.min(cv.height, (e.clientY - r.top) * cv.height / r.height)) }; };
+  cv.addEventListener('pointerdown', e => { st = pos(e); cv.setPointerCapture(e.pointerId); phRaw = null; ph = null; $('phOut').innerHTML = ''; });
+  cv.addEventListener('pointermove', e => {
+    if (!st) return;
+    const p = pos(e);
+    phSel = { x: Math.min(st.x, p.x), y: Math.min(st.y, p.y), w: Math.abs(p.x - st.x), h: Math.abs(p.y - st.y) };
+    phDraw();
+  });
+  const end = () => {
+    if (!st) return; st = null;
+    if (phSel && (phSel.w < 20 || phSel.h < 20)) phSel = null;
+    $('phNote').className = 'ph-note';
+    $('phNote').textContent = phSel ? 'Bölge seçildi. “Analiz et”e bas.' : 'Duvarı parmağınla sürükleyerek seç, sonra “Analiz et”e bas.';
+    phDraw();
+  };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+})();
 $('phFile').addEventListener('change', e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   const url = URL.createObjectURL(f), img = new Image();
-  $('phOut').innerHTML = ''; ph = null; phRaw = null;
+  $('phOut').innerHTML = ''; ph = null; phRaw = null; phSel = null; phImg = null;
   $('phNote').className = 'ph-note'; $('phNote').textContent = 'Fotoğraf okunuyor…';
-  img.onerror = () => { $('phNote').className = 'ph-err'; $('phNote').textContent = 'Bu dosya bir resim olarak açılamadı.'; };
-  img.onload = async () => {
-    const cv = $('phCanvas'), sc = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
-    cv.width = Math.round(img.naturalWidth * sc); cv.height = Math.round(img.naturalHeight * sc);
-    const c = cv.getContext('2d'); c.drawImage(img, 0, 0, cv.width, cv.height); cv.hidden = false;
-    $('phNote').textContent = 'Model çalışıyor… (ilk seferde model yüklendiği için biraz sürer)';
-    try {
-      const res = await aiTespit(img, 0.1);
-      phRaw = { img, res, sc };
-      fotoCiz();
-    } catch (err) {
-      $('phNote').className = 'ph-err';
-      $('phNote').textContent = err.message === 'MODEL_YOK'
-        ? 'Model dosyası (model.onnx) uygulamada yok. Ekibin eğitilmiş modeli depoya eklenince bu özellik çalışır.'
-        : String(err.message).startsWith('BETIK') ? 'Model çalıştırıcısı yüklenemedi. İnternet bağlantını kontrol et.'
-        : 'Analiz yapılamadı: ' + err.message;
-    } finally { URL.revokeObjectURL(url); }
+  img.onerror = () => { $('phNote').className = 'ph-err'; $('phNote').textContent = 'Bu dosya bir resim olarak açılamadı.'; URL.revokeObjectURL(url); };
+  img.onload = () => {
+    const cv = $('phCanvas'); phSc = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
+    cv.width = Math.round(img.naturalWidth * phSc); cv.height = Math.round(img.naturalHeight * phSc);
+    phImg = img; cv.hidden = false; $('phBtns').hidden = false; phDraw();
+    $('phNote').textContent = 'Duvarı parmağınla sürükleyerek seç (toprak, ağaç ve gölgeyi dışarıda bırak), sonra “Analiz et”e bas. Seçmezsen tüm fotoğraf taranır.';
+    URL.revokeObjectURL(url);
   };
   img.src = url;
 });
