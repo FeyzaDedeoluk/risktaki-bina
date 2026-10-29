@@ -314,9 +314,9 @@ function hesapCiz() {
   const b = { cov: +$('cCov').value, n: +$('cN').value, pga: +$('cPga').value, yil: Math.min(2026, Math.max(1900, +$('cYil').value || 1988)) };
   $('oCov').textContent = '%' + f1(b.cov); $('oN').textContent = f1(b.n); $('oPga').textContent = b.pga.toFixed(2).replace('.', ',') + ' g';
   const r = hesapla(b);
-  $('res').style.cssText = `--k:var(--${r.k});--kb:var(--${r.k}-bg)`;
-  $('res').innerHTML = `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div style="font:700 48px/1 var(--f-display);color:var(--c)">${Math.round(r.top)}<small style="font:500 15px var(--f-data);color:var(--muted)"> /100</small></div><div><span class="badge" style="--c:var(--${r.k});--bgc:var(--${r.k}-bg)">${KAT[r.k]} risk</span><div style="font-size:13px;color:var(--muted);margin-top:6px">Çatlak ${f1(r.c)} + Tehlike ${f1(r.t)} + Yaş ${f1(r.ya)}</div></div></div>
-  <div class="zones"><i style="left:${r.top}%"></i></div><div class="zlab"><span>0</span><span>40</span><span>70</span><span>100</span></div>`;
+  $('res').style.cssText = `--k:var(--${r.k})`;
+  $('res').innerHTML = `<div class="tot"><b>${Math.round(r.top)}</b><span>/ 100</span></div><div class="tk">${KAT[r.k]} risk<small>${KATSAY(r)}</small></div>`;
+  [['C', r.c, 40], ['T', r.t, 35], ['Y', r.ya, 25]].forEach(([k, v, m]) => { $('f' + k).textContent = f1(v) + ' / ' + m; $('b' + k).style.width = (v / m * 100) + '%'; });
 }
 ['cCov', 'cN', 'cPga', 'cYil'].forEach(i => $(i).addEventListener('input', hesapCiz));
 
