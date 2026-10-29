@@ -42,7 +42,7 @@ function nedenler(b) {
   return [
     { ad: 'Çatlak', val: b.c, max: 40, txt: catTxt },
     { ad: 'Deprem tehlikesi', val: b.t, max: 35, txt: `Bölgenin tepe yer ivmesi ${String(b.pga).replace('.', ',')} g. ${tehTxt}.` },
-    { ad: 'Bina yaşı', val: b.ya, max: 25, txt: `${b.yil} yapımı, ${donem(b.yil)}.` }
+    { ad: 'Bina yaşı', val: b.ya, max: 25, txt: `${b.yil} yapımı${b.yilT ? ' (tahmini, resmî kayıt yok)' : ''}, ${donem(b.yil)}.` }
   ];
 }
 function enEtkili(b) {
@@ -115,7 +115,7 @@ function normalizeBina(raw, i) {
     yil: Math.round(yil), kat: num(raw.kat), pga, lat, lon,
     cov: num(raw.cov ?? raw.kapsama_yuzde), n: num(raw.n ?? raw.catlak_ort),
     c0: num(raw.catlak_skoru), foto: num(raw.foto ?? raw.goruntu_sayisi) || 0, tarih: String(raw.tarih || ''),
-    _st: raw._st
+    yilT: !!(raw.yil_tahmin), _st: raw._st
   };
   b.key = b.ad + '|' + lat.toFixed(5) + '|' + lon.toFixed(5);
   Object.assign(b, hesapla(b));
