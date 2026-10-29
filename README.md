@@ -54,11 +54,12 @@ Model dosyası (`best.pt`) boyutu nedeniyle ayrıca eklenir. Eğitim Google Cola
 
 `index.html` mobil uygulama prototipidir (PWA: telefona "Ana ekrana ekle" ile kurulur, APK olarak da derlenir).
 
-- Gerçek harita (Leaflet + OpenStreetMap): sürükleni­r, yakınlaştırılır, konuma gidilir
+- Gerçek harita (Leaflet + OpenStreetMap): sürükleni, yakınlaştırılır, konuma gidilir
 - Risk renkli pinler ve kümeleme, bina arama, filtreler, risk veya yakınlık sıralı liste
 - Bina kartı: skorun nedeni, şematik çatlak çizimi, ne yapılmalı
 - Vatandaş, Belediye (denetim durumu, not, bekleyen filtresi) ve AFAD (mahalle risk özeti) görünümleri
 - **Fotoğraf analizi:** fotoğraf seçilir, çatlaklar cihazda işaretlenir ve skor hesaplanır (`model.onnx` gerekir)
+- **Uçuş yükle:** bir uçuştaki bütün fotoğraflar seçilir, binalara ayrılır, otomatik taranır ve haritaya eklenir
 - **Rapor:** tek bina raporu veya yüksek riskli binalar listesi, PDF veya resim olarak
 - Skor hesaplayıcı
 
@@ -69,6 +70,19 @@ Model dosyası (`best.pt`) boyutu nedeniyle ayrıca eklenir. Eğitim Google Cola
 3. Veri yoksa uygulama, "ÖRNEK VERİ" etiketli uydurma binalar gösterir.
 
 `binalar.csv` sütunları: `ad,klasor,yil,pga,enlem,boylam` (isteğe bağlı: `adres,mahalle,kat`).
+
+### Drone uçuşunu otomatik işleme
+
+Uçuştaki bütün fotoğraflar bir klasöre konur:
+
+```
+pip install -r requirements.txt
+python ucus_isle.py ucus_klasoru --model best.pt --pga 0.45 --yil 1990 --osm
+```
+
+Betik sırayla şunları yapar: fotoğraf konumunu okur (EXIF GPS, yoksa `--gpx` uçuş kaydı ve saat eşleştirmesi) → konuma göre binalara ayırır → her fotoğrafta gökyüzünü, ağacı ve zemini eler (`--seg` ile SegFormer, varsayılan klasik renk yöntemi) → duvarı orijinal çözünürlükte 640 px karolarla tarar (küçültme yok, ince çatlaklar kaybolmaz) → `--osm` ile OpenStreetMap'ten kat sayısı, varsa yapım yılı ve adresi alır → skoru hesaplar → `binalar.json` yazar ve `kanit/` klasörüne işaretli fotoğraf kaydeder.
+
+Bina yaşı fotoğraftan çıkmaz. Sırayla: `--csv` belediye listesi (enlem, boylam, yil) → OpenStreetMap `start_date` → `--yil` tahmini (uygulamada "tahmini" yazar). Deprem ivmesi için `--pga` ya da CSV'ye `pga` sütunu.
 
 ### Model dosyası (fotoğraf analizi için)
 

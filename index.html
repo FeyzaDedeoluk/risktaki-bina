@@ -62,13 +62,15 @@
   <div class="modal" id="mCalc" hidden>
     <div class="mcard" role="dialog" aria-modal="true" aria-labelledby="mTitle">
       <div class="mh"><h2 id="mTitle">Skor hesaplayıcı</h2><button class="iconbtn" data-close aria-label="Kapat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <p class="mtxt">Drone fotoğraflarından çıkan değerleri gir, skor modelin kullandığı formülle hesaplanır.</p>
-      <div class="ctrl"><label for="cCov">Çatlak kapsama oranı <output id="oCov"></output></label><input type="range" id="cCov" min="0" max="20" step="0.5" value="4"><small>Çatlak kutularının görüntü alanına oranı</small></div>
-      <div class="ctrl"><label for="cN">Fotoğraf başına çatlak <output id="oN"></output></label><input type="range" id="cN" min="0" max="8" step="0.5" value="2"><small>YOLOv8 tespit sayısı ortalaması</small></div>
-      <div class="ctrl"><label for="cPga">Deprem ivmesi (PGA) <output id="oPga"></output></label><input type="range" id="cPga" min="0.05" max="0.9" step="0.01" value="0.45"><small>AFAD Tehlike Haritası değeri, g cinsinden</small></div>
-      <div class="ctrl"><label for="cYil">Yapım yılı</label><input type="number" id="cYil" min="1900" max="2026" value="1988"><small>Yönetmelik dönemleri: 1975, 1998, 2018</small></div>
       <div class="res" id="res"></div>
-      <div class="formula">Skor = Çatlak (0–40) + Tehlike (0–35) + Yaş (0–25)<br>Çatlak = 40 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; sayı/5))</div>
+      <section class="fac"><div class="fh"><b>Çatlak</b><span id="fC"></span></div><div class="fbar"><i id="bC"></i></div>
+        <div class="ctrl"><label for="cCov">Kapsama oranı <output id="oCov"></output></label><input type="range" id="cCov" min="0" max="20" step="0.5" value="4"></div>
+        <div class="ctrl"><label for="cN">Fotoğraf başına çatlak <output id="oN"></output></label><input type="range" id="cN" min="0" max="8" step="0.5" value="2"></div></section>
+      <section class="fac"><div class="fh"><b>Deprem tehlikesi</b><span id="fT"></span></div><div class="fbar"><i id="bT"></i></div>
+        <div class="ctrl"><label for="cPga">Tepe yer ivmesi (PGA) <output id="oPga"></output></label><input type="range" id="cPga" min="0.05" max="0.9" step="0.01" value="0.45"><small>AFAD Türkiye Deprem Tehlike Haritası değeri</small></div></section>
+      <section class="fac"><div class="fh"><b>Bina yaşı</b><span id="fY"></span></div><div class="fbar"><i id="bY"></i></div>
+        <div class="ctrl"><label for="cYil">Yapım yılı</label><input type="number" id="cYil" min="1900" max="2026" value="1988"><small>Yönetmelik dönemleri: 1975, 1998, 2018</small></div></section>
+      <div class="formula">Çatlak = 40 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; sayı/5))</div>
     </div>
   </div>
 
