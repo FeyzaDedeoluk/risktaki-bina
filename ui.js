@@ -338,21 +338,34 @@ function fotoSonuc() {
     <p class="ph-note">Bu fotoğrafta ${ph.n} çatlak bulundu, görüntü alanının %${f1(ph.cov)}’i çatlaklı. Tek fotoğrafla yapılan bu hesap yalnızca deneme içindir. Gerçek skor bir binanın tüm fotoğraflarından hesaplanır.</p>`;
 }
 ['phYil', 'phPga'].forEach(i => $(i).addEventListener('input', fotoSonuc));
-let phRaw = null, phImg = null, phSc = 1, phSel = null;
+let phRaw = null, phImg = null, phSc = 1, phSel = null;   // phSel: serbest çizilmiş bölge, tuval pikselinde nokta listesi
+function polyAlan(p) { let a = 0; for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i].x * q.y - q.x * p[i].y; } return Math.abs(a) / 2; }
+function icinde(pt, p) {
+  let in_ = false;
+  for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+    if ((p[i].y > pt.y) !== (p[j].y > pt.y) && pt.x < (p[j].x - p[i].x) * (pt.y - p[i].y) / (p[j].y - p[i].y) + p[i].x) in_ = !in_;
+  }
+  return in_;
+}
+function phBoxes() {
+  if (!phRaw) return [];
+  const conf = +$('phConf').value;
+  return phRaw.res.boxes.filter(b => b.score >= conf && (!phRaw.poly || icinde({ x: (b.x1 + b.x2) / 2, y: (b.y1 + b.y2) / 2 }, phRaw.poly)));
+}
 function phDraw() {
   if (!phImg) return;
-  const cv = $('phCanvas'), c = cv.getContext('2d'), conf = +$('phConf').value;
+  const cv = $('phCanvas'), c = cv.getContext('2d');
   c.drawImage(phImg, 0, 0, cv.width, cv.height);
-  if (phSel) {
-    c.fillStyle = 'rgba(0,0,0,.5)';
-    c.fillRect(0, 0, cv.width, phSel.y); c.fillRect(0, phSel.y + phSel.h, cv.width, cv.height - phSel.y - phSel.h);
-    c.fillRect(0, phSel.y, phSel.x, phSel.h); c.fillRect(phSel.x + phSel.w, phSel.y, cv.width - phSel.x - phSel.w, phSel.h);
-    c.lineWidth = Math.max(2, cv.width / 260); c.strokeStyle = '#4da3ff'; c.setLineDash([10, 6]);
-    c.strokeRect(phSel.x, phSel.y, phSel.w, phSel.h); c.setLineDash([]);
+  if (phSel && phSel.length > 1) {
+    c.save(); c.beginPath(); c.rect(0, 0, cv.width, cv.height);
+    c.moveTo(phSel[0].x, phSel[0].y); phSel.slice(1).forEach(p => c.lineTo(p.x, p.y)); c.closePath();
+    c.fillStyle = 'rgba(0,0,0,.5)'; c.fill('evenodd'); c.restore();
+    c.lineWidth = Math.max(2, cv.width / 260); c.strokeStyle = '#4da3ff'; c.setLineDash([10, 6]); c.lineJoin = 'round';
+    c.beginPath(); c.moveTo(phSel[0].x, phSel[0].y); phSel.slice(1).forEach(p => c.lineTo(p.x, p.y)); c.closePath(); c.stroke(); c.setLineDash([]);
   }
   if (phRaw) {
     c.lineWidth = Math.max(2, cv.width / 220); c.strokeStyle = '#ff3b3b'; c.fillStyle = '#ff3b3b'; c.font = `600 ${Math.max(12, cv.width / 45)}px sans-serif`;
-    phRaw.res.boxes.filter(b => b.score >= conf).forEach(b => {
+    phBoxes().forEach(b => {
       const x = (phRaw.off.x + b.x1) * phSc, y = (phRaw.off.y + b.y1) * phSc, w = (b.x2 - b.x1) * phSc, h = (b.y2 - b.y1) * phSc;
       c.strokeRect(x, y, w, h); c.fillText(b.score.toFixed(2), x + 3, Math.max(14, y - 5));
     });
@@ -361,11 +374,11 @@ function phDraw() {
 function fotoCiz() {
   $('oConf').textContent = (+$('phConf').value).toFixed(2).replace('.', ',');
   if (!phRaw) { phDraw(); return; }
-  const conf = +$('phConf').value, res = phRaw.res;
-  const boxes = res.boxes.filter(b => b.score >= conf);
+  const res = phRaw.res, boxes = phBoxes();
   phDraw();
   ph = tespitOzeti({ boxes, w: res.w, h: res.h });
-  const t = conf.toFixed(2).replace('.', ',');
+  if (phRaw.alan) ph.cov = Math.min(100, Math.round(ph.cov * (res.w * res.h) / phRaw.alan * 100) / 100);
+  const t = (+$('phConf').value).toFixed(2).replace('.', ',');
   $('phNote').className = 'ph-note';
   $('phNote').textContent = ph.n ? `${ph.n} çatlak kutusu bulundu (güven eşiği ${t}).` : `Bu fotoğrafta çatlak bulunamadı (güven eşiği ${t}).`;
   fotoSonuc();
@@ -375,19 +388,27 @@ $('phConf').addEventListener('input', fotoCiz);
 async function phAnaliz() {
   if (!phImg) return;
   const W = phImg.naturalWidth, H = phImg.naturalHeight;
-  let sx = 0, sy = 0, sw = W, sh = H;
-  if (phSel && phSel.w > 20 && phSel.h > 20) {
-    sx = Math.max(0, Math.round(phSel.x / phSc)); sy = Math.max(0, Math.round(phSel.y / phSc));
-    sw = Math.min(W - sx, Math.round(phSel.w / phSc)); sh = Math.min(H - sy, Math.round(phSel.h / phSc));
+  let sx = 0, sy = 0, sw = W, sh = H, poly = null, alan = 0;
+  if (phSel && phSel.length > 2) {
+    const xs = phSel.map(p => p.x / phSc), ys = phSel.map(p => p.y / phSc);
+    sx = Math.max(0, Math.floor(Math.min(...xs))); sy = Math.max(0, Math.floor(Math.min(...ys)));
+    sw = Math.min(W - sx, Math.ceil(Math.max(...xs)) - sx); sh = Math.min(H - sy, Math.ceil(Math.max(...ys)) - sy);
+    poly = phSel.map(p => ({ x: p.x / phSc - sx, y: p.y / phSc - sy }));
+    alan = polyAlan(poly);
   }
   const cr = document.createElement('canvas'); cr.width = sw; cr.height = sh;
-  cr.getContext('2d').drawImage(phImg, sx, sy, sw, sh, 0, 0, sw, sh);
+  const cc = cr.getContext('2d');
+  if (poly) {
+    cc.fillStyle = 'rgb(114,114,114)'; cc.fillRect(0, 0, sw, sh);   // seçim dışı nötr gri, model bu alana bakmaz
+    cc.save(); cc.beginPath(); cc.moveTo(poly[0].x, poly[0].y); poly.slice(1).forEach(p => cc.lineTo(p.x, p.y)); cc.closePath(); cc.clip();
+    cc.drawImage(phImg, sx, sy, sw, sh, 0, 0, sw, sh); cc.restore();
+  } else cc.drawImage(phImg, 0, 0, W, H);
   $('phOut').innerHTML = ''; ph = null; phRaw = null; phDraw();
   $('phNote').className = 'ph-note';
   $('phNote').textContent = 'Model çalışıyor… (ilk seferde model yüklendiği için biraz sürer)';
   try {
     const res = await aiTespit(cr, 0.1);
-    phRaw = { res, off: { x: sx, y: sy } };
+    phRaw = { res, off: { x: sx, y: sy }, poly, alan };
     fotoCiz();
   } catch (err) {
     $('phNote').className = 'ph-err';
@@ -400,20 +421,19 @@ async function phAnaliz() {
 $('phRun').onclick = phAnaliz;
 $('phClr').onclick = () => { phSel = null; phRaw = null; ph = null; $('phOut').innerHTML = ''; $('phNote').textContent = 'Seçim temizlendi. Tüm fotoğraf taranacak.'; phDraw(); };
 (function phSelect() {
-  const cv = $('phCanvas'); let st = null;
+  const cv = $('phCanvas'); let drawing = false;
   const pos = e => { const r = cv.getBoundingClientRect(); return { x: Math.max(0, Math.min(cv.width, (e.clientX - r.left) * cv.width / r.width)), y: Math.max(0, Math.min(cv.height, (e.clientY - r.top) * cv.height / r.height)) }; };
-  cv.addEventListener('pointerdown', e => { st = pos(e); cv.setPointerCapture(e.pointerId); phRaw = null; ph = null; $('phOut').innerHTML = ''; });
+  cv.addEventListener('pointerdown', e => { drawing = true; cv.setPointerCapture(e.pointerId); phSel = [pos(e)]; phRaw = null; ph = null; $('phOut').innerHTML = ''; });
   cv.addEventListener('pointermove', e => {
-    if (!st) return;
-    const p = pos(e);
-    phSel = { x: Math.min(st.x, p.x), y: Math.min(st.y, p.y), w: Math.abs(p.x - st.x), h: Math.abs(p.y - st.y) };
-    phDraw();
+    if (!drawing) return;
+    const p = pos(e), l = phSel[phSel.length - 1];
+    if (Math.hypot(p.x - l.x, p.y - l.y) >= 3) { phSel.push(p); phDraw(); }
   });
   const end = () => {
-    if (!st) return; st = null;
-    if (phSel && (phSel.w < 20 || phSel.h < 20)) phSel = null;
+    if (!drawing) return; drawing = false;
+    if (phSel.length < 8 || polyAlan(phSel) < 600) phSel = null;
     $('phNote').className = 'ph-note';
-    $('phNote').textContent = phSel ? 'Bölge seçildi. “Analiz et”e bas.' : 'Duvarı parmağınla sürükleyerek seç, sonra “Analiz et”e bas.';
+    $('phNote').textContent = phSel ? 'Bölge seçildi. “Analiz et”e bas.' : 'Duvarın etrafını parmağınla çizerek seç, sonra “Analiz et”e bas.';
     phDraw();
   };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
@@ -428,7 +448,7 @@ $('phFile').addEventListener('change', e => {
     const cv = $('phCanvas'); phSc = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
     cv.width = Math.round(img.naturalWidth * phSc); cv.height = Math.round(img.naturalHeight * phSc);
     phImg = img; cv.hidden = false; $('phBtns').hidden = false; phDraw();
-    $('phNote').textContent = 'Duvarı parmağınla sürükleyerek seç (toprak, ağaç ve gölgeyi dışarıda bırak), sonra “Analiz et”e bas. Seçmezsen tüm fotoğraf taranır.';
+    $('phNote').textContent = 'Duvarın etrafını parmağınla çizerek seç (toprak, ağaç ve gölge dışarıda kalsın), sonra “Analiz et”e bas. Çizmezsen tüm fotoğraf taranır.';
     URL.revokeObjectURL(url);
   };
   img.src = url;
