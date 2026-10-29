@@ -79,6 +79,8 @@
       <p class="mtxt">Bir bina fotoğrafı seç veya çek. Çatlak tespiti cihazında çalışır, fotoğraf hiçbir yere gönderilmez.</p>
       <div class="phbox">
         <label class="filebtn" for="phFile">Fotoğraf seç veya çek<input type="file" id="phFile" accept="image/*"></label>
+        <p class="ph-note" style="background:var(--accent-soft);color:var(--fg);border-radius:12px;padding:9px 12px">İpucu: Çatlağa 1-2 metre yaklaş, çatıyı, gölgeyi ve bacayı kadraja alma. Model yakın plan beton çatlaklarıyla eğitildi.</p>
+        <div class="ctrl" style="margin:0"><label for="phConf">Güven eşiği <output id="oConf"></output></label><input type="range" id="phConf" min="0.1" max="0.9" step="0.05" value="0.5"><small>Yükselt: yanlış alarm azalır. Düşür: daha fazla çatlak bulunur.</small></div>
         <canvas id="phCanvas" hidden aria-label="Çatlak kutularıyla işaretlenmiş fotoğraf"></canvas>
         <div class="ph-note" id="phNote" role="status"></div>
         <div id="phOut"></div>

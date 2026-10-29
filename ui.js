@@ -323,7 +323,7 @@ function hesapCiz() {
 let ph = null;
 function fotoAc() {
   const b = state.sel != null ? B.find(x => x.id === state.sel) : null;
-  $('phYil').value = b ? b.yil : 1988; $('phPga').value = b ? b.pga : 0.45;
+  $('oConf').textContent = (+$('phConf').value).toFixed(2).replace('.', ','); $('phYil').value = b ? b.yil : 1988; $('phPga').value = b ? b.pga : 0.45;
   $('phBina').textContent = b ? `Yıl ve PGA değerleri seçili binadan alındı: ${b.ad}.` : 'Binayı seçmeden de deneyebilirsin. Yıl ve PGA değerlerini elle gir.';
   openModal('mPhoto');
 }
@@ -338,10 +338,29 @@ function fotoSonuc() {
     <p class="ph-note">Bu fotoğrafta ${ph.n} çatlak bulundu, görüntü alanının %${f1(ph.cov)}’i çatlaklı. Tek fotoğrafla yapılan bu hesap yalnızca deneme içindir. Gerçek skor bir binanın tüm fotoğraflarından hesaplanır.</p>`;
 }
 ['phYil', 'phPga'].forEach(i => $(i).addEventListener('input', fotoSonuc));
+let phRaw = null;
+function fotoCiz() {
+  if (!phRaw) return;
+  const conf = +$('phConf').value; $('oConf').textContent = conf.toFixed(2).replace('.', ',');
+  const { img, res, sc } = phRaw, cv = $('phCanvas'), c = cv.getContext('2d');
+  c.drawImage(img, 0, 0, cv.width, cv.height);
+  const boxes = res.boxes.filter(b => b.score >= conf);
+  c.lineWidth = Math.max(2, cv.width / 220); c.strokeStyle = '#ff3b3b'; c.fillStyle = '#ff3b3b'; c.font = `600 ${Math.max(12, cv.width / 45)}px sans-serif`;
+  boxes.forEach(b => {
+    const x = b.x1 * sc, y = b.y1 * sc, w = (b.x2 - b.x1) * sc, h = (b.y2 - b.y1) * sc;
+    c.strokeRect(x, y, w, h); c.fillText(b.score.toFixed(2), x + 3, Math.max(14, y - 5));
+  });
+  ph = tespitOzeti({ boxes, w: res.w, h: res.h });
+  const t = conf.toFixed(2).replace('.', ',');
+  $('phNote').className = 'ph-note';
+  $('phNote').textContent = ph.n ? `${ph.n} çatlak kutusu bulundu (güven eşiği ${t}).` : `Bu fotoğrafta çatlak bulunamadı (güven eşiği ${t}).`;
+  fotoSonuc();
+}
+$('phConf').addEventListener('input', fotoCiz);
 $('phFile').addEventListener('change', e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   const url = URL.createObjectURL(f), img = new Image();
-  $('phOut').innerHTML = ''; ph = null;
+  $('phOut').innerHTML = ''; ph = null; phRaw = null;
   $('phNote').className = 'ph-note'; $('phNote').textContent = 'Fotoğraf okunuyor…';
   img.onerror = () => { $('phNote').className = 'ph-err'; $('phNote').textContent = 'Bu dosya bir resim olarak açılamadı.'; };
   img.onload = async () => {
@@ -350,16 +369,9 @@ $('phFile').addEventListener('change', e => {
     const c = cv.getContext('2d'); c.drawImage(img, 0, 0, cv.width, cv.height); cv.hidden = false;
     $('phNote').textContent = 'Model çalışıyor… (ilk seferde model yüklendiği için biraz sürer)';
     try {
-      const res = await aiTespit(img, 0.25);
-      c.lineWidth = Math.max(2, cv.width / 220); c.strokeStyle = '#ff3b3b'; c.fillStyle = '#ff3b3b'; c.font = `600 ${Math.max(12, cv.width / 45)}px sans-serif`;
-      res.boxes.forEach(b => {
-        const x = b.x1 * sc, y = b.y1 * sc, w = (b.x2 - b.x1) * sc, h = (b.y2 - b.y1) * sc;
-        c.strokeRect(x, y, w, h); c.fillText(b.score.toFixed(2), x + 3, Math.max(14, y - 5));
-      });
-      const o = tespitOzeti(res); ph = o;
-      $('phNote').className = 'ph-note';
-      $('phNote').textContent = o.n ? `${o.n} çatlak kutusu bulundu (güven eşiği 0,25).` : 'Bu fotoğrafta çatlak bulunamadı (güven eşiği 0,25).';
-      fotoSonuc();
+      const res = await aiTespit(img, 0.1);
+      phRaw = { img, res, sc };
+      fotoCiz();
     } catch (err) {
       $('phNote').className = 'ph-err';
       $('phNote').textContent = err.message === 'MODEL_YOK'
