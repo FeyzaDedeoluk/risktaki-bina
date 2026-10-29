@@ -1,1 +1,4 @@
 ultralytics
+opencv-python-headless
+requests
+# --seg için: transformers
