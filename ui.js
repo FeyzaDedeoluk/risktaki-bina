@@ -449,7 +449,7 @@ $('phFile').addEventListener('change', e => {
     const cv = $('phCanvas'); phSc = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
     cv.width = Math.round(img.naturalWidth * phSc); cv.height = Math.round(img.naturalHeight * phSc);
     phImg = img; cv.hidden = false; $('phBtns').hidden = false; phDraw();
-    $('phNote').textContent = 'Duvarın etrafını parmağınla çizerek seç (toprak, ağaç ve gölge dışında kalsın), sonra “Analiz et”e bas. Çizmezsen tüm fotoğraf taranÄ±r.';
+    $('phNote').textContent = 'Duvarın etrafını parmağınla çizerek seç (toprak, ağaç ve gölge dışarıda kalsın), sonra “Analiz et”e bas. Çizmezsen tüm fotoğraf taranır.';
     URL.revokeObjectURL(url);
   };
   img.src = url;
