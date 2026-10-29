@@ -23,7 +23,9 @@ jobs:
       - name: Web dosyalarını hazırla
         run: |
           mkdir -p www
-          cp index.html manifest.webmanifest sw.js icon-192-1.png icon-512.png www/
+          cp index.html style.css data.js map.js ai.js report.js ui.js manifest.webmanifest sw.js icon-192-1.png icon-512.png www/
+          cp model.onnx www/ || true
+          cp binalar.json www/ || true
 
       - name: Capacitor ile Android projesi oluştur
         run: |
@@ -31,6 +33,10 @@ jobs:
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           npx cap add android
           npx cap sync android
+
+      - name: Konum izni ekle
+        run: |
+          sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <application#' android/app/src/main/AndroidManifest.xml
 
       - name: APK derle
         working-directory: android
