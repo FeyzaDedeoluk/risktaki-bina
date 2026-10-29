@@ -4,7 +4,7 @@
 const RP = { W: 1240, H: 1754, M: 80 };
 const RC = { low: '#1f8a5b', mid: '#b07d08', high: '#cf3a3a', lowBg: '#dff3e9', midBg: '#fbefc9', highBg: '#fadcdc',
   ink: '#15202d', mut: '#586577', line: '#dde3ea', acc: '#0e63b3', soft: '#f1f4f8' };
-const RF = "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+const RF = "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
 function rrect(c, x, y, w, h, r) {
   c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
@@ -59,7 +59,7 @@ async function tekBinaRaporu(b, canvas) {
   // bina adı
   c.fillStyle = RC.ink; c.font = `700 52px ${RF}`; c.fillText(fitText(c, b.ad, W - 2 * M), M, 270);
   c.fillStyle = RC.mut; c.font = `400 27px ${RF}`; c.fillText(fitText(c, b.adr || b.mh, W - 2 * M), M, 312);
-  // skor halıkası
+  // skor halçası
   const cx = M + 150, cy = 500, r = 120;
   c.lineWidth = 26; c.lineCap = 'round';
   c.strokeStyle = RC.soft; c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.stroke();

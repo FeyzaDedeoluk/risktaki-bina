@@ -2,16 +2,16 @@
    Renk: tek vurgu mavisi; yeşil/sarı/kırmızı yalnızca risk anlamı taşır. */
 :root{
   --gl:max(16px,env(safe-area-inset-left,0px)); --gr:max(16px,env(safe-area-inset-right,0px));
-  --bg:#eef1f5; --surface:#ffffff; --surface2:#f1f4f8; --line:#dde3ea;
-  --fg:#15202d; --muted:#586577; --accent:#0e63b3; --accent-fg:#ffffff; --accent-soft:#dcebfa;
+  --bg:#eef1f5; --surface:#ffffff; --surface2:#f1f3f4; --line:#e3e6ea;
+  --fg:#202124; --muted:#5f6368; --accent:#1a73e8; --accent-fg:#ffffff; --accent-soft:#dcebfa;
   --m-road:#fbfcfd; --m-land:#e4e9ef; --m-bld:#cfd7e1; --m-park:#cde5d3; --m-tree:#a9d1b4; --m-water:#b9d5ee; --m-label:#6b7889;
-  --low:#1f8a5b; --mid:#b07d08; --high:#cf3a3a;
-  --low-bg:#dff3e9; --mid-bg:#fbefc9; --high-bg:#fadcdc;
-  --low-ink:#ffffff; --mid-ink:#1b1400; --high-ink:#ffffff;
+  --low:#188038; --mid:#c26401; --high:#c5221f;
+  --low-bg:#e6f4ea; --mid-bg:#fef0d9; --high-bg:#fce8e6;
+  --low-ink:#ffffff; --mid-ink:#ffffff; --high-ink:#ffffff;
   --shadow:0 2px 10px rgba(20,32,48,.18); --shadow-up:0 -4px 22px rgba(20,32,48,.2);
-  --f-display:'Bricolage Grotesque',system-ui,sans-serif;
-  --f-body:'IBM Plex Sans',system-ui,sans-serif;
-  --f-data:'IBM Plex Mono',ui-monospace,monospace;
+  --f-display:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --f-body:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --f-data:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0e141c; --surface:#18212c; --surface2:#202b38; --line:#2d3947;
@@ -229,3 +229,94 @@ textarea{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:1
 .mah .fill{background:var(--c)}
 .mini{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600}
 .mini:hover{background:var(--surface2)}
+.ph-tip{font-size:13px;background:var(--accent-soft);color:var(--fg);border-radius:12px;padding:9px 12px}
+
+
+/* ================= TEMA (v2) =================
+   Vatandaş: sade harita uygulaması düzeni (düz liste, ince çizgi, tek vurgu).
+   Belediye ve AFAD: kurumsal lacivert üst çubuk, tablo düzeni. */
+.search{box-shadow:0 1px 6px rgba(60,64,67,.32)}
+.chip{border-radius:8px;box-shadow:0 1px 3px rgba(60,64,67,.3);font-weight:400}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.fab,.zoom{box-shadow:0 1px 4px rgba(60,64,67,.35)}
+.sheet{border-radius:16px 16px 0 0;box-shadow:0 -2px 10px rgba(60,64,67,.3)}
+.bar{width:36px;height:4px;background:#dadce0;margin-bottom:8px}
+.seg{background:transparent;border-radius:0;padding:0;gap:22px;border-bottom:1px solid var(--line);flex:1;margin-right:6px}
+.seg button{border-radius:0;padding:8px 0;font-weight:500;font-size:14px;border-bottom:3px solid transparent;margin-bottom:-1px}
+.seg button[aria-pressed="true"]{background:transparent;box-shadow:none;color:var(--accent);border-bottom-color:var(--accent)}
+.pill{border-radius:8px;font-weight:500}
+.lh h2{font-size:16px;font-weight:500}
+.stats{display:flex;gap:22px;margin:0 0 6px;padding-bottom:10px}
+.stats div{background:none;border-radius:0;padding:0}
+.stats b{font:500 20px var(--f-display)}
+.sorts button{border-radius:8px}
+.sorts button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
+/* liste: kutu yok, sağda büyük renkli skor */
+.rows button{grid-template-columns:1fr auto;padding:12px 0}
+.rows button .sc{order:2;width:auto;height:auto;background:none;border-radius:0;font:500 22px var(--f-display);text-align:right;display:block}
+.rows button>span:nth-child(2){order:1}
+.rows .rt{order:3;grid-column:1;grid-row:auto;text-align:left;justify-items:start;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rows .rt b{font-weight:500}
+.rows button{grid-template-areas:"n s" "r s"}
+.rows button>span:nth-child(2){grid-area:n}
+.rows button .sc{grid-area:s;align-self:center}
+.rows .rt{grid-area:r}
+.rows .nm{font-weight:500;font-size:15px}
+.tag{border-radius:4px;font-weight:500}
+/* bina kartı */
+.dtop{grid-template-columns:auto 1fr;gap:16px}
+.big{display:flex;align-items:baseline;gap:3px;color:var(--c)}
+.big b{font:500 56px/1 var(--f-display);letter-spacing:-.02em}
+.big span{font-size:14px;color:var(--muted)}
+.badge{border-radius:4px;font-weight:500;font-size:12.5px;padding:2px 8px}
+.dtop h2{font-weight:500;font-size:20px}
+.lead{border-radius:8px;border-left:4px solid var(--c)}
+.facade{border-radius:8px}
+.sec h3{font-weight:500}
+.fill{background:var(--c,var(--accent));border-radius:0}
+.trk{border-radius:0;height:6px}
+dl.facts div{border-radius:0;background:none;border-top:1px solid var(--line);padding:8px 0}
+dl.facts dt{text-transform:none;letter-spacing:0;font-size:12.5px}
+dl.facts dd{font:500 15px var(--f-body)}
+.todo li::before{border-radius:3px}
+.stat3 button{border-radius:8px;font-weight:500}
+.btn{border-radius:8px;font-weight:500}
+.mcard{border-radius:16px 16px 0 0}
+.tool{border-radius:8px}
+.tool .ti{border-radius:8px}
+.filebtn,.ph-tip,.ph-err,.res,textarea,.mah button,.phbox canvas{border-radius:8px}
+.zones{border-radius:0}
+.formula,.zlab,.ctrl output{font-family:var(--f-body)}
+.toast{border-radius:6px}
+
+/* ---- Belediye ve AFAD: kurumsal ---- */
+.app[data-role="belediye"],.app[data-role="afad"]{--accent:#14284b;--accent-soft:#e3e9f3;--surface2:#eef1f6}
+:root[data-theme="dark"] .app[data-role="belediye"],:root[data-theme="dark"] .app[data-role="afad"]{--accent:#8fb2ee;--accent-soft:#1c3351;--surface2:#202b38}
+.app[data-role="belediye"] .sheet,.app[data-role="afad"] .sheet{border-radius:0;border-top:3px solid var(--accent)}
+.app[data-role="belediye"] .grab,.app[data-role="afad"] .grab{background:var(--accent);margin-bottom:0}
+.app[data-role="belediye"] .bar,.app[data-role="afad"] .bar{background:rgba(255,255,255,.4)}
+.app[data-role="belediye"] .seg,.app[data-role="afad"] .seg{border-bottom-color:rgba(255,255,255,.25)}
+.app[data-role="belediye"] .seg button,.app[data-role="afad"] .seg button{color:rgba(255,255,255,.7)}
+.app[data-role="belediye"] .seg button[aria-pressed="true"],.app[data-role="afad"] .seg button[aria-pressed="true"]{color:#fff;border-bottom-color:#fff}
+.app[data-role="belediye"] .pill,.app[data-role="afad"] .pill{background:transparent;border-color:rgba(255,255,255,.5);color:#fff;border-radius:3px}
+.app[data-role="belediye"] .chip,.app[data-role="afad"] .chip{border-radius:3px}
+.app[data-role="belediye"] .search,.app[data-role="afad"] .search{border-radius:3px;box-shadow:0 1px 4px rgba(20,40,75,.4)}
+.app[data-role="belediye"] .rows button,.app[data-role="afad"] .rows button{padding:8px 10px;border-top:0;border-bottom:1px solid var(--line)}
+.app[data-role="belediye"] .rows li:nth-child(even) button,.app[data-role="afad"] .rows li:nth-child(even) button{background:var(--surface2)}
+.app[data-role="belediye"] .rows button .sc,.app[data-role="afad"] .rows button .sc{background:var(--k);color:#fff;font:700 17px var(--f-display);min-width:44px;padding:4px 0;text-align:center;border-radius:3px}
+.app[data-role="belediye"] .rows .nm,.app[data-role="afad"] .rows .nm{font-weight:700;color:var(--accent)}
+.app[data-role="belediye"] .lh,.app[data-role="afad"] .lh{padding-left:2px}
+.app[data-role="belediye"] .lh h2,.app[data-role="afad"] .lh h2{font-weight:700;color:var(--accent)}
+.app[data-role="belediye"] .stats,.app[data-role="afad"] .stats{gap:0;border:1px solid var(--line);margin-bottom:10px}
+.app[data-role="belediye"] .stats div,.app[data-role="afad"] .stats div{flex:1;padding:8px 10px;border-right:1px solid var(--line)}
+.app[data-role="belediye"] .stats div:last-child,.app[data-role="afad"] .stats div:last-child{border-right:0}
+.app[data-role="belediye"] .btn,.app[data-role="afad"] .btn,.app[data-role="belediye"] .stat3 button,.app[data-role="afad"] .stat3 button,.app[data-role="belediye"] .mah button,.app[data-role="afad"] .mah button{border-radius:3px}
+.app[data-role="belediye"] .sec h3,.app[data-role="afad"] .sec h3{color:var(--accent);font-weight:700}
+
+.ucrow{display:grid;grid-template-columns:1fr auto;grid-template-areas:"n s" "a s";gap:2px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.ucrow .sc{grid-area:s;width:auto;height:auto;background:none;font:500 22px var(--f-display);color:var(--k)}
+.ucrow>span:nth-child(2){grid-area:n}
+.ucrow>b{grid-area:a;font-weight:500;color:var(--k);font-size:12.5px}
+.ucmore summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--accent)}
+.ucmore input[type=file]{margin-top:6px;font-size:13px;max-width:100%}
+progress{accent-color:var(--accent)}
