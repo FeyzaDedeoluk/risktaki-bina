@@ -1,5 +1,8 @@
 {
   "appId": "com.semruk.risktekibina",
   "appName": "Risktaki Bina",
-  "webDir": "www"
+  "webDir": "www",
+  "server": {
+    "url": "https://feyzadedeoluk.github.io/risktaki-bina/"
+  }
 }
