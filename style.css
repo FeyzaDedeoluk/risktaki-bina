@@ -293,12 +293,6 @@ dl.facts dd{font:500 15px var(--f-body)}
 .app[data-role="belediye"],.app[data-role="afad"]{--accent:#14284b;--accent-soft:#e3e9f3;--surface2:#eef1f6}
 :root[data-theme="dark"] .app[data-role="belediye"],:root[data-theme="dark"] .app[data-role="afad"]{--accent:#8fb2ee;--accent-soft:#1c3351;--surface2:#202b38}
 .app[data-role="belediye"] .sheet,.app[data-role="afad"] .sheet{border-radius:0;border-top:3px solid var(--accent)}
-.app[data-role="belediye"] .grab,.app[data-role="afad"] .grab{background:var(--accent);margin-bottom:0}
-.app[data-role="belediye"] .bar,.app[data-role="afad"] .bar{background:rgba(255,255,255,.4)}
-.app[data-role="belediye"] .seg,.app[data-role="afad"] .seg{border-bottom-color:rgba(255,255,255,.25)}
-.app[data-role="belediye"] .seg button,.app[data-role="afad"] .seg button{color:rgba(255,255,255,.7)}
-.app[data-role="belediye"] .seg button[aria-pressed="true"],.app[data-role="afad"] .seg button[aria-pressed="true"]{color:#fff;border-bottom-color:#fff}
-.app[data-role="belediye"] .pill,.app[data-role="afad"] .pill{background:transparent;border-color:rgba(255,255,255,.5);color:#fff;border-radius:3px}
 .app[data-role="belediye"] .chip,.app[data-role="afad"] .chip{border-radius:3px}
 .app[data-role="belediye"] .search,.app[data-role="afad"] .search{border-radius:3px;box-shadow:0 1px 4px rgba(20,40,75,.4)}
 .app[data-role="belediye"] .rows button,.app[data-role="afad"] .rows button{padding:8px 10px;border-top:0;border-bottom:1px solid var(--line)}
@@ -320,3 +314,26 @@ dl.facts dd{font:500 15px var(--f-body)}
 .ucmore summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--accent)}
 .ucmore input[type=file]{margin-top:6px;font-size:13px;max-width:100%}
 progress{accent-color:var(--accent)}
+
+/* Belediye/AFAD: açık zemin, lacivert yalnızca çizgi ve seçili durumda */
+.app[data-role="belediye"] .grab,.app[data-role="afad"] .grab{background:var(--surface)}
+.app[data-role="belediye"] .seg button[aria-pressed="true"],.app[data-role="afad"] .seg button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.app[data-role="belediye"] .pill,.app[data-role="afad"] .pill{border-radius:3px;color:var(--fg)}
+.app[data-role="belediye"] .chip[aria-pressed="true"],.app[data-role="afad"] .chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.app[data-role="belediye"] .rows .nm,.app[data-role="afad"] .rows .nm,.app[data-role="belediye"] .lh h2,.app[data-role="afad"] .lh h2,.app[data-role="belediye"] .sec h3,.app[data-role="afad"] .sec h3{color:var(--fg)}
+.app[data-role="belediye"] .srcnote,.app[data-role="afad"] .srcnote{background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:none}
+
+/* Hesaplayıcı: her etkenin girdisi kendi puanının altında */
+#mCalc .res{display:flex;align-items:center;gap:14px;padding:4px 0 14px;border-bottom:2px solid var(--k);margin-bottom:6px;position:sticky;top:0;background:var(--surface);z-index:1}
+#mCalc .tot{display:flex;align-items:baseline;gap:4px;color:var(--k)}
+#mCalc .tot b{font:700 52px/1 var(--f-display)}
+#mCalc .tot span{font-size:14px;color:var(--muted)}
+#mCalc .tk{font-weight:700;color:var(--k)}
+#mCalc .tk small{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:2px}
+.fac{padding:14px 0 6px;border-bottom:1px solid var(--line)}
+.fac .fh{display:flex;justify-content:space-between;align-items:baseline}
+.fac .fh b{font-size:15px}.fac .fh span{font:600 14px var(--f-data);color:var(--muted)}
+.fac .fbar{height:6px;background:var(--surface2);border-radius:3px;margin:6px 0 10px;overflow:hidden}
+.fac .fbar i{display:block;height:100%;background:var(--fg);width:0;transition:width .15s}
+
+#mCalc .tot{flex:none;white-space:nowrap}
