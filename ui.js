@@ -64,7 +64,7 @@ function applySheet() {
 
 /* ================= ROL, FİLTRE, ARAMA ================= */
 function setRole(r) {
-  state.role = r; persist();
+  state.role = r; persist(); $('app').dataset.role = r;
   document.querySelectorAll('[data-role]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.role === r)));
   renderChips(); renderAll();
 }
@@ -169,8 +169,7 @@ function listeyiGuncelleSoon() { clearTimeout(listTimer); listTimer = setTimeout
 
 /* ================= BİNA KARTI ================= */
 function ring(b) {
-  const r = 44, c = 2 * Math.PI * r;
-  return `<svg class="ring" viewBox="0 0 108 108" role="img" aria-label="Risk skoru ${Math.round(b.top)} / 100"><circle class="rt" cx="54" cy="54" r="${r}"/><circle class="rg" cx="54" cy="54" r="${r}" stroke-dasharray="${(c * b.top / 100).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 54 54)"/><text class="rn" x="54" y="50">${Math.round(b.top)}</text><text class="rs" x="54" y="72">/ 100</text></svg>`;
+  return `<div class="big" role="img" aria-label="Risk skoru ${Math.round(b.top)} / 100"><b>${Math.round(b.top)}</b><span>/ 100</span></div>`;
 }
 function facade(b) {
   const R = rng(b.id * 977), fl = Math.min(b.kat || 4, 10), fh = Math.min(112, fl * 16 + 14), fw = 148, x0 = 46, y0 = 134 - fh;
@@ -258,7 +257,7 @@ $('zIn').onclick = () => MAP.m.zoomIn();
 $('zOut').onclick = () => MAP.m.zoomOut();
 
 /* ================= PENCERELER ================= */
-const MODALS = ['mTools', 'mCalc', 'mPhoto', 'mRep'];
+const MODALS = ['mTools', 'mCalc', 'mPhoto', 'mRep', 'mUcus'];
 let lastFocus = null;
 function openModal(id) {
   lastFocus = document.activeElement;
@@ -276,6 +275,8 @@ $('mTools').addEventListener('click', e => {
   else if (t === 'calc') openCalc(null);
   else if (t === 'liste') raporAc(null);
   else if (t === 'veri') $('dataFile').click();
+  else if (t === 'ucus') ucusAc();
+  else if (t === 'indir') veriIndir();
   else if (t === 'ornek') { try { localStorage.removeItem(DATA_KEY); } catch (_) { } closeModal(); veriyiYukle().then(d => { setData(d.list, d.src); toast('Örnek veriye dönüldü'); }); }
 });
 
@@ -448,7 +449,7 @@ $('phFile').addEventListener('change', e => {
     const cv = $('phCanvas'); phSc = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
     cv.width = Math.round(img.naturalWidth * phSc); cv.height = Math.round(img.naturalHeight * phSc);
     phImg = img; cv.hidden = false; $('phBtns').hidden = false; phDraw();
-    $('phNote').textContent = 'Duvarın etrafını parmağınla çizerek seç (toprak, ağaç ve gölge dışarıda kalsın), sonra “Analiz et”e bas. Çizmezsen tüm fotoğraf taranır.';
+    $('phNote').textContent = 'Duvarın etrafını parmağınla çizerek seç (toprak, ağaç ve gölge dışında kalsın), sonra “Analiz et”e bas. Çizmezsen tüm fotoğraf taranÄ±r.';
     URL.revokeObjectURL(url);
   };
   img.src = url;
@@ -476,6 +477,7 @@ $('repPdf').onclick = async () => {
 
 /* ================= BAŞLANGIÇ ================= */
 async function boot() {
+  $('app').dataset.role = state.role;
   document.querySelectorAll('[data-role]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.role === state.role)));
   applySheet(); renderChips(); hesapCiz();
   initMap();
