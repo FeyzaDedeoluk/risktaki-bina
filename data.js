@@ -115,7 +115,8 @@ function normalizeBina(raw, i) {
     yil: Math.round(yil), kat: num(raw.kat), pga, lat, lon,
     cov: num(raw.cov ?? raw.kapsama_yuzde), n: num(raw.n ?? raw.catlak_ort),
     c0: num(raw.catlak_skoru), foto: num(raw.foto ?? raw.goruntu_sayisi) || 0, tarih: String(raw.tarih || ''),
-    yilT: !!(raw.yil_tahmin), _st: raw._st
+    yilT: !!(raw.yil_tahmin), _st: raw._st,
+    kanit: typeof raw.kanit === 'string' && raw.kanit.startsWith('data:image/') ? raw.kanit : null
   };
   b.key = b.ad + '|' + lat.toFixed(5) + '|' + lon.toFixed(5);
   Object.assign(b, hesapla(b));
