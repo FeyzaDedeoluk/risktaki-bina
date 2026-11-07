@@ -208,7 +208,7 @@ function detailHTML(b) {
   } else {
     const todo = b.k === 'high' ? ['Bina yöneticisine bu raporu göster ve çatlakları fotoğrafla.', 'Bakanlıkça yetkilendirilmiş kuruluşlara resmi risk tespiti için başvur.', 'Belediyenin kentsel dönüşüm birimine danış.']
       : b.k === 'mid' ? ['Çatlakları tarihli fotoğraflarla kayıt altına al.', 'Bir inşaat mühendisinden görüş iste.', 'Altı ay sonra yeni taramayı bekle.']
-      : ['Şu an ek işlem gerekmiyor.', 'Yeni bir çatlak görürsen fotoğraflaıp yöneticiye bildir.', 'Yıllık taramada skor güncellenir.'];
+      : ['Şu an ek işlem gerekmiyor.', 'Yeni bir çatlak görürsen fotoğraflayıp yöneticiye bildir.', 'Yıllık taramada skor güncellenir.'];
     h += `<div class="sec"><h3>Ne yapabilirsin?</h3><ul class="todo">${todo.map(t => `<li>${t}</li>`).join('')}</ul>
     <div class="actions"><button class="btn" data-copy="one">Paylaşmak için kopyala</button><button class="btn alt" data-rapor>Rapor oluştur</button></div></div>`;
   }
@@ -336,7 +336,7 @@ function fotoSonuc() {
     <div style="font:700 44px/1 var(--f-display);color:var(--c)">${Math.round(r.top)}<small style="font:500 15px var(--f-data);color:var(--muted)"> /100</small></div>
     <div><span class="badge" style="--c:var(--${r.k});--bgc:var(--${r.k}-bg)">${KAT[r.k]} risk</span>
     <div style="font-size:13px;color:var(--muted);margin-top:6px">Çatlak ${f1(r.c)} + Tehlike ${f1(r.t)} + Yaş ${f1(r.ya)}</div></div></div></div>
-    <p class="ph-note">Bu fotoğrafın ${ph.n} çatlak bulundu, görüntü alanının %${f1(ph.cov)}’i çatlaklı. Tek fotoğraflа yapılan bu hesap yalnızca deneme içindir. Gerçek skor bir binanın tüm fotoğraflarından hesaplanır.</p>`;
+    <p class="ph-note">Bu fotoğrafta ${ph.n} çatlak bulundu, görüntü alanının %${f1(ph.cov)}’i çatlaklı. Tek fotoğrafla yapılan bu hesap yalnızca deneme içindir. Gerçek skor bir binanın tüm fotoğraflarından hesaplanır.</p>`;
 }
 ['phYil', 'phPga'].forEach(i => $(i).addEventListener('input', fotoSonuc));
 let phRaw = null, phImg = null, phSc = 1, phSel = null;   // phSel: serbest çizilmiş bölge, tuval pikselinde nokta listesi
@@ -381,7 +381,7 @@ function fotoCiz() {
   if (phRaw.alan) ph.cov = Math.min(100, Math.round(ph.cov * (res.w * res.h) / phRaw.alan * 100) / 100);
   const t = (+$('phConf').value).toFixed(2).replace('.', ',');
   $('phNote').className = 'ph-note';
-  $('phNote').textContent = ph.n ? `${ph.n} çatlak kutusu bulundu (güven eşiği ${t}).` : `Bu fotoğrafın çatlak bulunamadı (güven eşiği ${t}).`;
+  $('phNote').textContent = ph.n ? `${ph.n} çatlak kutusu bulundu (güven eşiği ${t}).` : `Bu fotoğrafta çatlak bulunamadı (güven eşiği ${t}).`;
   fotoSonuc();
 }
 $('phConf').addEventListener('input', fotoCiz);
@@ -434,7 +434,7 @@ $('phClr').onclick = () => { phSel = null; phRaw = null; ph = null; $('phOut').i
     if (!drawing) return; drawing = false;
     if (phSel.length < 8 || polyAlan(phSel) < 600) phSel = null;
     $('phNote').className = 'ph-note';
-    $('phNote').textContent = phSel ? 'Bölge seçildi. “Analiz et”е bas.' : 'Duvarın etrafını parmağınla çizerek seç, sonra “Analiz et”е bas.';
+    $('phNote').textContent = phSel ? 'Bölge seçildi. “Analiz et”e bas.' : 'Duvarın etrafını parmağınla çizerek seç, sonra “Analiz et”e bas.';
     phDraw();
   };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
@@ -449,7 +449,7 @@ $('phFile').addEventListener('change', e => {
     const cv = $('phCanvas'); phSc = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
     cv.width = Math.round(img.naturalWidth * phSc); cv.height = Math.round(img.naturalHeight * phSc);
     phImg = img; cv.hidden = false; $('phBtns').hidden = false; phDraw();
-    $('phNote').textContent = 'Duvarın etrafını parmağınla çizerek seç (toprak, ağaç ve gölge dışında kalsın), sonra “Analiz et”е bas. Çizmezsen tüm fotoğraf taranır.';
+    $('phNote').textContent = 'Duvarın etrafını parmağınla çizerek seç (toprak, ağaç ve gölge dışında kalsın), sonra “Analiz et”e bas. Çizmezsen tüm fotoğraf taranır.';
     URL.revokeObjectURL(url);
   };
   img.src = url;
