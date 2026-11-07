@@ -9,7 +9,7 @@ belediye CSV'si) -> risk skoru -> binalar.json (uygulamaya "Veri yükle" ile ver
   python ucus_isle.py ucus_klasoru --model best.pt --pga 0.45 --yil 1990
   python ucus_isle.py ucus_klasoru --model best.pt --gpx ucus.gpx --csv belediye.csv --osm
 """
-import argparse, csv, json, math, os, re, sys, time
+import argparse, base64, csv, json, math, os, re, sys, time
 from datetime import datetime, timedelta
 import cv2, numpy as np
 from PIL import Image, ExifTags
@@ -150,6 +150,13 @@ def tespit(model, bgr, maske, conf, kare=640, adim=480, min_duvar=0.6):
     keep = torchvision.ops.nms(t, s, 0.45).tolist()
     return [(kutular[i], skorlar[i]) for i in keep]
 
+def kucuk_resim(im, genislik=640, kalite=70):
+    """İşaretli fotoğrafı küçültüp data URI yapar: binalar.json içinde taşınır, ayrı dosya gerekmez."""
+    h, w = im.shape[:2]; s = genislik / w
+    k = cv2.resize(im, (genislik, int(h * s)), interpolation=cv2.INTER_AREA) if s < 1 else im
+    ok, buf = cv2.imencode('.jpg', k, [cv2.IMWRITE_JPEG_QUALITY, kalite])
+    return 'data:image/jpeg;base64,' + base64.b64encode(buf.tobytes()).decode() if ok else None
+
 def ozet(kutular, maske):
     """cov = kutuların birleşik alanı / duvar alanı (%), n = çatlak sayısı."""
     duvar = int(maske.sum())
@@ -261,6 +268,7 @@ def main():
         r = {'ad': ad, 'adres': adres, 'mahalle': f'Uçuş {tarih}', 'enlem': round(g['lat'], 6), 'boylam': round(g['lon'], 6),
              'yil': yil, 'yil_tahmin': tahmini, 'kat': kat, 'pga': pga, 'kapsama_yuzde': round(cov, 2), 'catlak_ort': round(n, 2),
              'foto': kullanilan, 'tarih': tarih, 'kaynak': 'ucus'}
+        if en_iyi[1] is not None: r['kanit'] = kucuk_resim(en_iyi[1])
         if kullanilan < a.min_foto: r['uyari'] = 'az fotoğraf'
         cikti.append(r)
     onceki = []
