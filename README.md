@@ -1,4 +1,4 @@
-# Risktaki Bina
+# Riskteki Bina
 
 Deprem öncesi drone ve yapay zekâ ile bina risk tespit sistemi. Drone fotoğraflarından çatlakları bulur, bölgenin deprem tehlikesi ve bina yaşıyla birleştirip her bina için 0–100 arası risk skoru üretir, sonucu harita tabanlı bir mobil uygulamada gösterir.
 

@@ -48,7 +48,7 @@ function raporAltBilgi(c) {
   c.fillStyle = RC.mut; c.font = `400 21px ${RF}`;
   wrapText(c, 'Bu skor, drone fotoğraflarından yapılan ön değerlendirmedir. Binanın deprem güvenliği hakkında kesin hüküm vermez ve resmi risk tespitinin yerine geçmez.', M, H - 110, W - 2 * M, 30);
   c.font = `500 20px ${RF}`;
-  c.fillText('Risktaki Bina · SEMRUK' + (state.src === 'ornek' ? ' · Örnek veri, gerçek bina değildir' : ''), M, H - 36);
+  c.fillText('Riskteki Bina · SEMRUK' + (state.src === 'ornek' ? ' · Örnek veri, gerçek bina değildir' : ''), M, H - 36);
 }
 
 async function tekBinaRaporu(b, canvas) {
@@ -59,7 +59,7 @@ async function tekBinaRaporu(b, canvas) {
   // bina adı
   c.fillStyle = RC.ink; c.font = `700 52px ${RF}`; c.fillText(fitText(c, b.ad, W - 2 * M), M, 270);
   c.fillStyle = RC.mut; c.font = `400 27px ${RF}`; c.fillText(fitText(c, b.adr || b.mh, W - 2 * M), M, 312);
-  // skor halçası
+  // skor halkası
   const cx = M + 150, cy = 500, r = 120;
   c.lineWidth = 26; c.lineCap = 'round';
   c.strokeStyle = RC.soft; c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.stroke();
