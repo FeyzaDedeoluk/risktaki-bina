@@ -339,3 +339,12 @@ progress{accent-color:var(--accent)}
 #mCalc .tot{flex:none;white-space:nowrap}
 
 .kanit{width:100%;display:block;border-radius:8px;background:var(--surface2);margin-bottom:4px}
+
+/* Karanlık mod: Belediye/AFAD rolünde lacivert yerine açık mavi vurgu, yazılar koyu zeminde okunur */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .app[data-role="belediye"],:root:not([data-theme="light"]) .app[data-role="afad"]{--accent:#8fb2ee;--accent-soft:#1c3351;--surface2:#202b38}
+  :root:not([data-theme="light"]) .app[data-role="belediye"] .chip[aria-pressed="true"],:root:not([data-theme="light"]) .app[data-role="afad"] .chip[aria-pressed="true"]{color:var(--accent-fg)}
+  :root:not([data-theme="light"]) .app[data-role="belediye"] .rows button .sc,:root:not([data-theme="light"]) .app[data-role="afad"] .rows button .sc{color:#08111d}
+}
+:root[data-theme="dark"] .app[data-role="belediye"] .chip[aria-pressed="true"],:root[data-theme="dark"] .app[data-role="afad"] .chip[aria-pressed="true"]{color:var(--accent-fg)}
+:root[data-theme="dark"] .app[data-role="belediye"] .rows button .sc,:root[data-theme="dark"] .app[data-role="afad"] .rows button .sc{color:#08111d}
