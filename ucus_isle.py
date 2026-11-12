@@ -21,16 +21,20 @@ SKORA_GIREN = {0, 1, 2}   # tuzlanma bilgi olarak raporlanır, skora girmez
 RENK = [(0, 0, 255), (0, 159, 255), (19, 101, 181), (255, 196, 46)]   # BGR: kırmızı, turuncu, kahverengi, mavi
 
 # ---- skor formülü: risk_skor.py ve data.js ile aynı ----
-def catlak_skoru(cov, n): return 40 * (0.6 * min(1, cov / 15) + 0.4 * min(1, n / 5))
-def tehlike_skoru(pga): return 35 * max(0, min(1, (pga - 0.05) / 0.75))
+def catlak_skoru(cov, n): return 35 * (0.6 * min(1, cov / 15) + 0.4 * min(1, n / 5))
+def tehlike_skoru(pga): return 30 * max(0, min(1, (pga - 0.05) / 0.75))
 def yas_skoru(y):
     if y < 1975: return 25
     if y < 1998: return 20 - (y - 1975) / 23 * 5
     if y < 2018: return 12 - (y - 1998) / 20 * 6
     return 3
-def skor(cov, n, pga, yil):
+def kat_skoru(kat):
+    """0-10: 1-2 kat 0, 8+ kat 10, arası doğrusal. Kayıt yoksa 5 (ortalama)."""
+    if kat is None: return 5
+    return 10 * max(0, min(1, (float(kat) - 2) / 6))
+def skor(cov, n, pga, yil, kat=None):
     c, t, a = catlak_skoru(cov, n), tehlike_skoru(pga), yas_skoru(yil)
-    top = round(c + t + a, 1)
+    top = round(c + t + a + kat_skoru(kat), 1)
     return top, 'Düşük' if top <= 40 else 'Orta' if top <= 70 else 'Yüksek'
 
 # ---- EXIF ----
@@ -282,7 +286,7 @@ def main():
         kat = (float(kr['kat']) if kr and kr.get('kat') else None) or bilgi.get('kat')
         ad = (kr or {}).get('ad') or bilgi.get('ad') or f'Bina {gi}'
         adres = (kr or {}).get('adres') or bilgi.get('adres') or ''
-        top, kat_ad = skor(cov, n, pga, yil)
+        top, kat_ad = skor(cov, n, pga, yil, kat)
         print(f'  {ad}: {kullanilan}/{len(g["fotolar"])} foto, hasar kapsaması %{cov:.2f}, hasar bulgusu {n:.1f}, yıl {yil} ({kaynak_yil}) -> {top} {kat_ad}')
         r = {'ad': ad, 'adres': adres, 'mahalle': f'Uçuş {tarih}', 'enlem': round(g['lat'], 6), 'boylam': round(g['lon'], 6),
              'yil': yil, 'yil_tahmin': tahmini, 'kat': kat, 'pga': pga, 'kapsama_yuzde': round(cov, 2), 'catlak_ort': round(n, 2),

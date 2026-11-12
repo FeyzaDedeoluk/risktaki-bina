@@ -23,7 +23,7 @@ TEKNOFEST 2026 Deneyap Takımlar Dönemi projesi, ekip **SEMRUK**.
 ## Özellikler
 
 - YOLOv8n ile hasar tespiti: çatlak, beton kopması, korozyon ve tuzlanma (tuzlanma bilgi amaçlıdır, skora girmez)
-- Yapısal hasar, deprem tehlikesi ve bina yaşından oluşan 0–100 risk skoru
+- Yapısal hasar, deprem tehlikesi, bina yaşı ve kat sayısından oluşan 0–100 risk skoru
 - Leaflet ve OpenStreetMap tabanlı harita: risk renkli pinler, kümeleme, arama, filtre, yakınlık sıralaması
 - Üç görünüm: Vatandaş, Belediye (denetim durumu, not), AFAD (mahalle risk özeti)
 - Tarayıcıda çalışan fotoğraf analizi (ONNX Runtime Web, fotoğraf cihazdan çıkmaz)
@@ -37,13 +37,14 @@ TEKNOFEST 2026 Deneyap Takımlar Dönemi projesi, ekip **SEMRUK**.
 Drone fotoğrafları → konuma göre bina gruplama → duvar maskesi → hasar tespiti → risk skoru → harita
 ```
 
-**Skor = Yapısal hasar (0–40) + Deprem tehlikesi (0–35) + Bina yaşı (0–25)**
+**Skor = Yapısal hasar (0–35) + Deprem tehlikesi (0–30) + Bina yaşı (0–25) + Kat sayısı (0–10)**
 
 | Bileşen | Formül |
 |---|---|
-| Yapısal hasar | `40 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; hasar sayısı/5))`. Çatlak, beton kopması ve korozyon birlikte sayılır |
-| Deprem tehlikesi | `35 × clamp((PGA − 0,05) / 0,75)`, PGA: AFAD Türkiye Deprem Tehlike Haritası, tepe yer ivmesi (g) |
+| Yapısal hasar | `35 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; hasar sayısı/5))`. Çatlak, beton kopması ve korozyon birlikte sayılır |
+| Deprem tehlikesi | `30 × clamp((PGA − 0,05) / 0,75)`, PGA: AFAD Türkiye Deprem Tehlike Haritası, tepe yer ivmesi (g) |
 | Bina yaşı | 1975 öncesi 25; 1975–1997: 20'den 15'e; 1998–2017: 12'den 6'ya; 2018 ve sonrası 3 |
+| Kat sayısı | `10 × clamp((kat − 2) / 6)`: 1–2 kat 0, 8 ve üzeri 10 puan. Kayıt yoksa 5 puan varsayılır (arayüzde belirtilir) |
 
 | Skor | Kategori |
 |---|---|
@@ -51,7 +52,7 @@ Drone fotoğrafları → konuma göre bina gruplama → duvar maskesi → hasar 
 | 41–70 | Orta |
 | 71–100 | Yüksek |
 
-Kapsama, çatlak, beton kopması ve korozyon kutularının birleşik alanının duvar alanına oranıdır (%). Tuzlanma kutuları ayrıca gösterilir ama skora girmez; sınıf ağırlıkları takım kararıdır ve bilimsel olarak doğrulanmamıştır. Aynı formül `risk_skor.py`, `ucus_isle.py`, `data.js` ve `ucus.js` içinde kullanılır.
+Kapsama, çatlak, beton kopması ve korozyon kutularının birleşik alanının duvar alanına oranıdır (%). Tuzlanma kutuları ayrıca gösterilir ama skora girmez; sınıf ağırlıkları ve kat sayısı puanı takım kararıdır, bilimsel olarak doğrulanmamıştır. Aynı formül `risk_skor.py`, `ucus_isle.py`, `data.js` ve `ucus.js` içinde kullanılır.
 
 ## Kurulum
 
