@@ -176,7 +176,7 @@ function facade(b) {
   let s = `<svg class="facade" viewBox="0 0 240 150" role="img" aria-label="Şematik bina çizimi"><line class="gnd" x1="10" y1="134" x2="230" y2="134"/><rect class="wall" x="${x0}" y="${y0}" width="${fw}" height="${fh}"/>`;
   const rh = (fh - 12) / fl;
   for (let i = 0; i < fl; i++) for (let j = 0; j < 4; j++) s += `<rect class="win" x="${x0 + 12 + j * 34}" y="${(y0 + 8 + i * rh).toFixed(1)}" width="20" height="${Math.min(9, rh - 5).toFixed(1)}" rx="1.5"/>`;
-  const cov = b.cov != null ? b.cov : b.c / 40 * 9, n = b.n != null ? b.n : b.c / 40 * 4;
+  const cov = b.cov != null ? b.cov : b.c / 35 * 9, n = b.n != null ? b.n : b.c / 35 * 4;
   const cn = Math.max(0, Math.round(cov / 3 + n / 2));
   for (let k = 0; k < cn; k++) {
     let x = x0 + 8 + R() * (fw - 16), y = y0 + 6 + R() * (fh - 24), d = `M${x.toFixed(1)} ${y.toFixed(1)}`;
@@ -305,20 +305,21 @@ function setData(list, src) {
 const cl = (v, a, z) => Math.max(a, Math.min(z, v));
 function openCalc(b) {
   if (b) {
-    $('cCov').value = cl(b.cov != null ? b.cov : b.c / 40 * 9, 0, 20); $('cN').value = cl(b.n != null ? b.n : b.c / 40 * 4, 0, 8);
+    $('cCov').value = cl(b.cov != null ? b.cov : b.c / 35 * 9, 0, 20); $('cN').value = cl(b.n != null ? b.n : b.c / 35 * 4, 0, 8);
+    $('cKat').value = b.kat != null ? b.kat : '';
     $('cPga').value = cl(b.pga, 0.05, 0.9); $('cYil').value = b.yil;
   }
   openModal('mCalc'); hesapCiz();
 }
 function hesapCiz() {
-  const b = { cov: +$('cCov').value, n: +$('cN').value, pga: +$('cPga').value, yil: Math.min(2026, Math.max(1900, +$('cYil').value || 1988)) };
+  const b = { cov: +$('cCov').value, n: +$('cN').value, pga: +$('cPga').value, yil: Math.min(2026, Math.max(1900, +$('cYil').value || 1988)), kat: $('cKat').value === '' ? null : +$('cKat').value };
   $('oCov').textContent = '%' + f1(b.cov); $('oN').textContent = f1(b.n); $('oPga').textContent = b.pga.toFixed(2).replace('.', ',') + ' g';
   const r = hesapla(b);
   $('res').style.cssText = `--k:var(--${r.k})`;
   $('res').innerHTML = `<div class="tot"><b>${Math.round(r.top)}</b><span>/ 100</span></div><div class="tk">${KAT[r.k]} risk<small>${KATSAY(r)}</small></div>`;
-  [['C', r.c, 40], ['T', r.t, 35], ['Y', r.ya, 25]].forEach(([k, v, m]) => { $('f' + k).textContent = f1(v) + ' / ' + m; $('b' + k).style.width = (v / m * 100) + '%'; });
+  [['C', r.c, 35], ['T', r.t, 30], ['Y', r.ya, 25], ['K', r.kt, 10]].forEach(([k, v, m]) => { $('f' + k).textContent = f1(v) + ' / ' + m; $('b' + k).style.width = (v / m * 100) + '%'; });
 }
-['cCov', 'cN', 'cPga', 'cYil'].forEach(i => $(i).addEventListener('input', hesapCiz));
+['cCov', 'cN', 'cPga', 'cYil', 'cKat'].forEach(i => $(i).addEventListener('input', hesapCiz));
 
 /* ---- fotoğraf analizi ---- */
 let ph = null;
@@ -331,11 +332,12 @@ function fotoAc() {
 function fotoSonuc() {
   if (!ph) return;
   const yil = Math.min(2026, Math.max(1900, +$('phYil').value || 1988)), pga = +$('phPga').value || 0.45;
-  const r = hesapla({ cov: ph.cov, n: ph.n, pga, yil });
+  const sb = state.sel != null ? B.find(x => x.id === state.sel) : null;
+  const r = hesapla({ cov: ph.cov, n: ph.n, pga, yil, kat: sb ? sb.kat : null });
   $('phOut').innerHTML = `<div class="res" style="--k:var(--${r.k});--kb:var(--${r.k}-bg)"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
     <div style="font:700 44px/1 var(--f-display);color:var(--c)">${Math.round(r.top)}<small style="font:500 15px var(--f-data);color:var(--muted)"> /100</small></div>
     <div><span class="badge" style="--c:var(--${r.k});--bgc:var(--${r.k}-bg)">${KAT[r.k]} risk</span>
-    <div style="font-size:13px;color:var(--muted);margin-top:6px">Hasar ${f1(r.c)} + Tehlike ${f1(r.t)} + Yaş ${f1(r.ya)}</div></div></div></div>
+    <div style="font-size:13px;color:var(--muted);margin-top:6px">Hasar ${f1(r.c)} + Tehlike ${f1(r.t)} + Yaş ${f1(r.ya)} + Kat ${f1(r.kt)}</div></div></div></div>
     <p class="ph-note">Bu fotoğrafta ${ph.n} hasar bulgusu var, görüntü alanının %${f1(ph.cov)}’inde hasar görülüyor. Tek fotoğrafla yapılan bu hesap yalnızca deneme içindir. Gerçek skor bir binanın tüm fotoğraflarından hesaplanır.</p>`;
 }
 ['phYil', 'phPga'].forEach(i => $(i).addEventListener('input', fotoSonuc));
