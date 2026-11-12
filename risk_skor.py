@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 SEMRUK - RISKTEKI BINA
-Goruntuden risk skoruna: YOLOv8 catlak tespiti + AFAD tehlike + bina yasi -> 0-100 skor
+Goruntuden risk skoruna: YOLOv8 hasar tespiti (catlak, beton kopmasi, korozyon) + AFAD tehlike + bina yasi -> 0-100 skor
 
 Kullanim:
   python risk_skor.py --gorseller foto_klasoru --model best.pt --yil 1985 --pga 0.45 --ad "Bina-1"
@@ -11,12 +11,14 @@ binalar.csv sutunlari: ad,klasor,yil,pga,enlem,boylam   (istege bagli: adres,mah
 (pga yoksa 'bolge' sutunu 1-5 verilebilir)
 Cikti (sonuc.json) uygulamada Araclar > Veri yukle ile secilebilir ya da depoya binalar.json adiyla konabilir.
 
-Skor = Catlak (0-40) + Deprem Tehlikesi (0-35) + Bina Yasi (0-25)
+Skor = Yapisal hasar (0-40) + Deprem Tehlikesi (0-35) + Bina Yasi (0-25)
   0-40 Dusuk (yesil) | 41-70 Orta (sari) | 71-100 Yuksek (kirmizi)
 """
 import argparse, csv, datetime, json, os, sys
 
 UZANTILAR = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
+SINIFLAR = ["crack", "spalling", "corrosion", "efflorescence"]
+SKORA_GIREN = {"crack", "spalling", "corrosion"}   # tuzlanma bilgi olarak sayilir, skora girmez
 
 # ---------------------------------------------------------------- SKOR FORMULU
 def catlak_skoru(kutular, goruntu_alani, goruntu_sayisi=1):
@@ -93,27 +95,34 @@ def klasorden_goruntuler(klasor):
 
 
 def goruntu_analiz(yollar, model_yolu, esik=0.25, kayit_klasoru=None):
-    """Tum goruntulerde catlak tespiti. (kutular, toplam_alan, goruntu_sayisi) dondurur."""
+    """Tum goruntulerde hasar tespiti. (kutular, toplam_alan, goruntu_sayisi, sinif_sayilari) dondurur.
+    kutular yalnizca skora giren siniflarin kutulari; sinif_sayilari tum siniflarin toplam sayisi."""
     model = model_yukle(model_yolu)
     kutular, alan_ort, n = [], 0, 0
+    sayilar = {s: 0 for s in SINIFLAR}
     for yol in yollar:
         sonuc = model.predict(yol, conf=esik, verbose=False)[0]
         h, w = sonuc.orig_shape
         alan_ort += h * w
         n += 1
         for b in sonuc.boxes:
+            ad = str(model.names.get(int(b.cls[0]), "crack")).lower()   # tek sinifli eski modelde her sey 'crack'
+            ad = ad if ad in SINIFLAR else "crack"
+            sayilar[ad] += 1
+            if ad not in SKORA_GIREN:
+                continue
             x1, y1, x2, y2 = b.xyxy[0].tolist()
             kutular.append(((x2 - x1) * (y2 - y1), float(b.conf[0])))
         if kayit_klasoru:
             os.makedirs(kayit_klasoru, exist_ok=True)
             sonuc.save(filename=os.path.join(kayit_klasoru, os.path.basename(yol)))
-    return kutular, (alan_ort / n if n else 0), n
+    return kutular, (alan_ort / n if n else 0), n, sayilar
 
 
 def bina_analiz(ad, klasor, model_yolu, yil, pga=None, bolge=None, enlem=None, boylam=None, esik=0.25, kayit=None,
                 adres="", mahalle="", kat=None):
     yollar = klasorden_goruntuler(klasor)
-    kutular, alan, n = goruntu_analiz(yollar, model_yolu, esik, kayit)
+    kutular, alan, n, sayilar = goruntu_analiz(yollar, model_yolu, esik, kayit)
     c = catlak_skoru(kutular, alan, n)
     t = tehlike_skoru(pga, bolge)
     y = yas_skoru(yil)
@@ -123,6 +132,7 @@ def bina_analiz(ad, klasor, model_yolu, yil, pga=None, bolge=None, enlem=None, b
         pga = round({1: 0.80, 2: 0.61, 3: 0.43, 4: 0.24, 5: 0.13}[int(bolge)], 2)
     r.update({"ad": ad, "yil": int(yil), "pga": pga, "bolge": bolge, "enlem": enlem, "boylam": boylam,
               "goruntu_sayisi": n, "tespit_sayisi": len(kutular),
+              "sinif": {k: round(v / n, 2) if n else 0 for k, v in sayilar.items()},
               # uygulamanin okudugu alanlar
               "adr": adres, "mh": mahalle, "kat": kat, "cov": cov, "n": n_ort, "foto": n,
               "lat": enlem, "lon": boylam, "tarih": datetime.date.today().strftime("%d.%m.%Y")})
@@ -167,7 +177,7 @@ def main():
         json.dump(sonuclar, f, ensure_ascii=False, indent=2)
     for r in sonuclar:
         print(f'{r["ad"]:<14} {r["toplam"]:>5}/100  {r["kategori"]:<7} '
-              f'(catlak {r["catlak_skoru"]} + tehlike {r["tehlike_skoru"]} + yas {r["yas_skoru"]})')
+              f'(hasar {r["catlak_skoru"]} + tehlike {r["tehlike_skoru"]} + yas {r["yas_skoru"]})')
     print("->", a.cikti)
 
 

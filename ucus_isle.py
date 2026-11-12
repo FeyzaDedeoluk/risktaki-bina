@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Risktaki Bina: drone uçuşunu otomatik işler.
+"""Riskteki Bina: drone uçuşunu otomatik işler.
 
-Klasördeki fotoğraflar -> konuma göre binalara ayrılır -> gökyüzü, ağaç ve zemin
-elenir (yalnızca duvar taranır) -> çatlak tespiti -> bina bilgisi (OpenStreetMap,
+Klasördeki fotoğraflar -> konuma göre binalara ayrılır -> gökyazü, ağaç ve zemin
+elenir (yalnızca duvar taranır) -> hasar tespiti (çatlak, beton kopması, korozyon, tuzlanma) -> bina bilgisi (OpenStreetMap,
 belediye CSV'si) -> risk skoru -> binalar.json (uygulamaya "Veri yükle" ile verilir).
 
 Örnek:
@@ -13,6 +13,12 @@ import argparse, base64, csv, json, math, os, re, sys, time
 from datetime import datetime, timedelta
 import cv2, numpy as np
 from PIL import Image, ExifTags
+
+# ---- sınıflar: best_hasar.pt (0 crack, 1 spalling, 2 corrosion, 3 efflorescence) ----
+SINIFLAR = ['crack', 'spalling', 'corrosion', 'efflorescence']
+SINIF_TR = ['Çatlak', 'Beton kopması', 'Korozyon', 'Tuzlanma']
+SKORA_GIREN = {0, 1, 2}   # tuzlanma bilgi olarak raporlanır, skora girmez
+RENK = [(0, 0, 255), (0, 159, 255), (19, 101, 181), (255, 196, 46)]   # BGR: kırmızı, turuncu, kahverengi, mavi
 
 # ---- skor formülü: risk_skor.py ve data.js ile aynı ----
 def catlak_skoru(cov, n): return 40 * (0.6 * min(1, cov / 15) + 0.4 * min(1, n / 5))
@@ -91,7 +97,7 @@ def grupla(fotolar, yaricap):
             en['lat'] += (f['lat'] - en['lat']) / k; en['lon'] += (f['lon'] - en['lon']) / k
     return gr
 
-# ---- duvar maskesi: gökyüzü, bitki, zemin dışarıda ----
+# ---- duvar maskesi: gökyazü, bitki, zemin dışında ----
 def duvar_maskesi(bgr):
     """Klasik yöntem (ek paket gerekmez). 1 = duvar adayı. Daha iyisi için --seg."""
     h, w = bgr.shape[:2]
@@ -130,10 +136,15 @@ def duvar_maskesi_seg(bgr):
     return np.isin(sinif, [0, 1, 25, 48, 84]).astype(np.uint8)  # wall, building, house, skyscraper, tower
 
 # ---- çatlak tespiti: kırpılmadan, orijinal çözünürlükte karolar ----
+def sinif_no(model, c):
+    """Modelin sınıf adını bizim sabit sıramıza çevirir (tek sınıflı eski modelde her şey 'crack' sayılır)."""
+    ad = str(model.names.get(int(c), 'crack')).lower() if hasattr(model, 'names') else 'crack'
+    return SINIFLAR.index(ad) if ad in SINIFLAR else 0
+
 def tespit(model, bgr, maske, conf, kare=640, adim=480, min_duvar=0.6):
     import torch, torchvision
     h, w = bgr.shape[:2]
-    kutular, skorlar = [], []
+    kutular, skorlar, siniflar = [], [], []
     for y in range(0, max(1, h - kare) + adim, adim):
         for x in range(0, max(1, w - kare) + adim, adim):
             x0, y0 = min(x, max(0, w - kare)), min(y, max(0, h - kare))
@@ -144,26 +155,30 @@ def tespit(model, bgr, maske, conf, kare=640, adim=480, min_duvar=0.6):
                 x1, y1, x2, y2 = bx.xyxy[0].tolist()
                 cx, cy = int((x1 + x2) / 2) + x0, int((y1 + y2) / 2) + y0
                 if 0 <= cy < h and 0 <= cx < w and maske[cy, cx]:
-                    kutular.append([x1 + x0, y1 + y0, x2 + x0, y2 + y0]); skorlar.append(float(bx.conf[0]))
+                    kutular.append([x1 + x0, y1 + y0, x2 + x0, y2 + y0]); skorlar.append(float(bx.conf[0])); siniflar.append(sinif_no(model, bx.cls[0]))
     if not kutular: return []
-    t = torch.tensor(kutular); s = torch.tensor(skorlar)
-    keep = torchvision.ops.nms(t, s, 0.45).tolist()
-    return [(kutular[i], skorlar[i]) for i in keep]
+    t = torch.tensor(kutular); s = torch.tensor(skorlar); c = torch.tensor(siniflar)
+    keep = torchvision.ops.batched_nms(t, s, c, 0.45).tolist()   # aynı sınıfta üst üste binenler elenir
+    return [(kutular[i], skorlar[i], siniflar[i]) for i in keep]
 
 def kucuk_resim(im, genislik=640, kalite=70):
-    """İşaretli fotoğrafı küçültüp data URI yapar: binalar.json içinde taşınır, ayrı dosya gerekmez."""
+    """İşaretli fotoğrafı küçültp data URI yapar: binalar.json içinde taşınır, ayrı dosya gerekmez."""
     h, w = im.shape[:2]; s = genislik / w
     k = cv2.resize(im, (genislik, int(h * s)), interpolation=cv2.INTER_AREA) if s < 1 else im
     ok, buf = cv2.imencode('.jpg', k, [cv2.IMWRITE_JPEG_QUALITY, kalite])
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.tobytes()).decode() if ok else None
 
 def ozet(kutular, maske):
-    """cov = kutuların birleşik alanı / duvar alanı (%), n = çatlak sayısı."""
+    """cov = skora giren hasar kutularının birleşik alanı / duvar alanı (%), n = bu kutuların sayısı.
+    sinif = her sınıfın kutu sayısı (tuzlanma dahil)."""
     duvar = int(maske.sum())
-    if duvar == 0: return 0.0, 0
+    sinif = [0, 0, 0, 0]
+    for _, _, c in kutular: sinif[c] += 1
+    giren = [k for k in kutular if k[2] in SKORA_GIREN]
+    if duvar == 0: return 0.0, 0, sinif
     m = np.zeros(maske.shape, np.uint8)
-    for (x1, y1, x2, y2), _ in kutular: m[int(y1):int(y2), int(x1):int(x2)] = 1
-    return min(100.0, float((m & maske).sum()) / duvar * 100), len(kutular)
+    for (x1, y1, x2, y2), _, _ in giren: m[int(y1):int(y2), int(x1):int(x2)] = 1
+    return min(100.0, float((m & maske).sum()) / duvar * 100), len(giren), sinif
 
 # ---- bina bilgisi ----
 def osm_bina(lat, lon, r=35):
@@ -237,7 +252,7 @@ def main():
     maskefn = duvar_maskesi_seg if a.seg else duvar_maskesi
     cikti = []
     for gi, g in enumerate(gruplar, 1):
-        covs, ns, kullanilan = [], [], 0
+        covs, ns, kullanilan, sn = [], [], 0, [0, 0, 0, 0]
         en_iyi = (-1, None)
         for f in g['fotolar']:
             bgr = cv2.imread(f['yol'])
@@ -245,10 +260,14 @@ def main():
             maske = maskefn(bgr)
             if maske.mean() < 0.25: continue  # kadrajda duvar yok
             kb = tespit(model, bgr, maske, a.conf)
-            cov, n = ozet(kb, maske); covs.append(cov); ns.append(n); kullanilan += 1
+            cov, n, sinif = ozet(kb, maske); covs.append(cov); ns.append(n); kullanilan += 1
+            for i in range(4): sn[i] += sinif[i]
             if len(kb) > en_iyi[0]:
                 im = bgr.copy(); im[maske == 0] = (im[maske == 0] * 0.35).astype(np.uint8)
-                for (x1, y1, x2, y2), s in kb: cv2.rectangle(im, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), max(2, im.shape[1] // 600))
+                kal = max(2, im.shape[1] // 600)
+                for (x1, y1, x2, y2), s, c in kb:
+                    cv2.rectangle(im, (int(x1), int(y1)), (int(x2), int(y2)), RENK[c], kal)
+                    cv2.putText(im, SINIFLAR[c], (int(x1), max(15, int(y1) - 6)), cv2.FONT_HERSHEY_SIMPLEX, max(0.5, im.shape[1] / 2400), RENK[c], max(1, kal // 2))
                 en_iyi = (len(kb), im)
         if not covs:
             print(f'  bina {gi}: duvar görünen fotoğraf yok, atlandı'); continue
@@ -264,9 +283,10 @@ def main():
         ad = (kr or {}).get('ad') or bilgi.get('ad') or f'Bina {gi}'
         adres = (kr or {}).get('adres') or bilgi.get('adres') or ''
         top, kat_ad = skor(cov, n, pga, yil)
-        print(f'  {ad}: {kullanilan}/{len(g["fotolar"])} foto, kapsama %{cov:.2f}, çatlak {n:.1f}, yıl {yil} ({kaynak_yil}) -> {top} {kat_ad}')
+        print(f'  {ad}: {kullanilan}/{len(g["fotolar"])} foto, hasar kapsaması %{cov:.2f}, hasar bulgusu {n:.1f}, yıl {yil} ({kaynak_yil}) -> {top} {kat_ad}')
         r = {'ad': ad, 'adres': adres, 'mahalle': f'Uçuş {tarih}', 'enlem': round(g['lat'], 6), 'boylam': round(g['lon'], 6),
              'yil': yil, 'yil_tahmin': tahmini, 'kat': kat, 'pga': pga, 'kapsama_yuzde': round(cov, 2), 'catlak_ort': round(n, 2),
+             'sinif': {SINIFLAR[i]: round(sn[i] / kullanilan, 2) for i in range(4)},
              'foto': kullanilan, 'tarih': tarih, 'kaynak': 'ucus'}
         if en_iyi[1] is not None: r['kanit'] = kucuk_resim(en_iyi[1])
         if kullanilan < a.min_foto: r['uyari'] = 'az fotoğraf'
