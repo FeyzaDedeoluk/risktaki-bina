@@ -11,7 +11,7 @@ binalar.csv sutunlari: ad,klasor,yil,pga,enlem,boylam   (istege bagli: adres,mah
 (pga yoksa 'bolge' sutunu 1-5 verilebilir)
 Cikti (sonuc.json) uygulamada Araclar > Veri yukle ile secilebilir ya da depoya binalar.json adiyla konabilir.
 
-Skor = Yapisal hasar (0-40) + Deprem Tehlikesi (0-35) + Bina Yasi (0-25)
+Skor = Yapisal hasar (0-35) + Deprem Tehlikesi (0-30) + Bina Yasi (0-25) + Kat Sayisi (0-10)
   0-40 Dusuk (yesil) | 41-70 Orta (sari) | 71-100 Yuksek (kirmizi)
 """
 import argparse, csv, datetime, json, os, sys
@@ -22,7 +22,7 @@ SKORA_GIREN = {"crack", "spalling", "corrosion"}   # tuzlanma bilgi olarak sayil
 
 # ---------------------------------------------------------------- SKOR FORMULU
 def catlak_skoru(kutular, goruntu_alani, goruntu_sayisi=1):
-    """0-40. kutular: [(alan_px, guven), ...] tum goruntulerden.
+    """0-35. kutular: [(alan_px, guven), ...] tum goruntulerden.
     Kapsama (guvenle agirliklandirilmis alan orani) %60, catlak sayisi %40 agirlik."""
     if goruntu_sayisi <= 0 or goruntu_alani <= 0:
         return 0.0
@@ -31,7 +31,7 @@ def catlak_skoru(kutular, goruntu_alani, goruntu_sayisi=1):
     kapsama_n = min(1.0, kapsama / 0.15)        # %15 kapsama = tam puan
     sayi_ort = len(kutular) / goruntu_sayisi
     sayi_n = min(1.0, sayi_ort / 5.0)           # goruntu basi 5 catlak = tam puan
-    return round(40 * (0.6 * kapsama_n + 0.4 * sayi_n), 1)
+    return round(35 * (0.6 * kapsama_n + 0.4 * sayi_n), 1)
 
 
 def catlak_ozet(kutular, goruntu_alani, goruntu_sayisi=1):
@@ -43,7 +43,7 @@ def catlak_ozet(kutular, goruntu_alani, goruntu_sayisi=1):
 
 
 def tehlike_skoru(pga=None, bolge=None):
-    """0-35. pga: AFAD tepe yer ivmesi (g, DD-2 475 yil). 0.05g ve alti ~0, 0.80g ve ustu tam puan.
+    """0-30. pga: AFAD tepe yer ivmesi (g, DD-2 475 yil). 0.05g ve alti ~0, 0.80g ve ustu tam puan.
     pga yoksa bolge (1=cok yuksek ... 5=cok dusuk, eski harita) kullanilir."""
     if pga is not None:
         n = (float(pga) - 0.05) / (0.80 - 0.05)
@@ -51,7 +51,7 @@ def tehlike_skoru(pga=None, bolge=None):
         n = {1: 1.0, 2: 0.75, 3: 0.5, 4: 0.25, 5: 0.1}[int(bolge)]
     else:
         raise ValueError("pga veya bolge verilmeli")
-    return round(35 * max(0.0, min(1.0, n)), 1)
+    return round(30 * max(0.0, min(1.0, n)), 1)
 
 
 def yas_skoru(yapim_yili):
@@ -74,11 +74,18 @@ def kategori(toplam):
     return "Yuksek", "kirmizi"
 
 
-def risk_hesapla(catlak, tehlike, yas):
-    toplam = round(catlak + tehlike + yas, 1)
+def kat_skoru(kat=None):
+    """0-10. 1-2 kat 0, 8 ve ustu 10, arasi dogrusal. Kayit yoksa 5 (ortalama) varsayilir. Agirlik takim kararidir."""
+    if kat is None:
+        return 5.0
+    return round(10 * max(0.0, min(1.0, (float(kat) - 2) / 6)), 1)
+
+
+def risk_hesapla(catlak, tehlike, yas, kat_p=5.0):
+    toplam = round(catlak + tehlike + yas + kat_p, 1)
     ad, renk = kategori(toplam)
     return {"toplam": toplam, "kategori": ad, "renk": renk,
-            "catlak_skoru": catlak, "tehlike_skoru": tehlike, "yas_skoru": round(yas, 1)}
+            "catlak_skoru": catlak, "tehlike_skoru": tehlike, "yas_skoru": round(yas, 1), "kat_skoru": kat_p}
 
 # ---------------------------------------------------------------- GORUNTU ANALIZI
 _model = None
@@ -126,7 +133,7 @@ def bina_analiz(ad, klasor, model_yolu, yil, pga=None, bolge=None, enlem=None, b
     c = catlak_skoru(kutular, alan, n)
     t = tehlike_skoru(pga, bolge)
     y = yas_skoru(yil)
-    r = risk_hesapla(c, t, y)
+    r = risk_hesapla(c, t, y, kat_skoru(kat))
     cov, n_ort = catlak_ozet(kutular, alan, n)
     if pga is None and bolge is not None:
         pga = round({1: 0.80, 2: 0.61, 3: 0.43, 4: 0.24, 5: 0.13}[int(bolge)], 2)
@@ -177,7 +184,7 @@ def main():
         json.dump(sonuclar, f, ensure_ascii=False, indent=2)
     for r in sonuclar:
         print(f'{r["ad"]:<14} {r["toplam"]:>5}/100  {r["kategori"]:<7} '
-              f'(hasar {r["catlak_skoru"]} + tehlike {r["tehlike_skoru"]} + yas {r["yas_skoru"]})')
+              f'(hasar {r["catlak_skoru"]} + tehlike {r["tehlike_skoru"]} + yas {r["yas_skoru"]} + kat {r["kat_skoru"]})')
     print("->", a.cikti)
 
 
