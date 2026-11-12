@@ -123,19 +123,20 @@ async function ucusCalistir() {
   try {
     await aiYukle();
     for (const g of U.groups) {
-      const covs = [], ns = [];
+      const covs = [], ns = [], sn = [0, 0, 0, 0];
       for (const it of g.items) {
         $('ucProgT').textContent = `Analiz ediliyor: ${done + 1} / ${total}`; $('ucBar').value = done / total * 100;
         try {
           const bm = await createImageBitmap(it.f, { resizeWidth: 1280, resizeQuality: 'medium' });
           const res = await aiTespit(bm, UCUS_CONF); if (bm.close) bm.close();
-          const o = tespitOzeti(res); covs.push(o.cov); ns.push(o.n);
+          const o = tespitOzeti(res); covs.push(o.cov); ns.push(o.n); o.sinif.forEach((v, i) => sn[i] += v);
         } catch (e) { /* bozuk fotoğraf atlanır */ }
         done++; await new Promise(r => setTimeout(r));
       }
       g.cov = covs.length ? covs.reduce((a, b) => a + b, 0) / covs.length : 0;
       g.n = ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : 0;
       g.foto = covs.length;
+      g.sinif = covs.length ? { crack: sn[0] / covs.length, spalling: sn[1] / covs.length, corrosion: sn[2] / covs.length, efflorescence: sn[3] / covs.length } : null;
       const m = (U.csv || []).map(r => ({ r, d: haversine(r, g.c) })).filter(x => x.d <= 40).sort((a, b) => a.d - b.d)[0];
       g.yil = m ? m.r.yil : yilT; g.yilT = !m; g.ad = m && m.r.ad || ''; g.adr = m && m.r.adr || ''; g.kat = m ? m.r.kat : null;
       g.pga = pga; g.r = hesapla({ cov: g.cov, n: g.n, pga, yil: g.yil });
@@ -150,7 +151,7 @@ async function ucusCalistir() {
 }
 function ucusSonuc() {
   const L = U.groups.filter(g => g.r).sort((a, b) => b.r.top - a.r.top);
-  $('ucOut').innerHTML = `<ul class="rows">${L.map(g => `<li><div class="ucrow" style="--k:var(--${g.r.k})"><span class="sc">${Math.round(g.r.top)}</span><span><div class="nm">${esc(g.ad || 'Yeni bina')}</div><div class="ad">${g.foto} fotoğraf · çatlak ${f1(g.cov)}% · ${g.yil}${g.yilT ? ' (tahmini)' : ''}${g.foto < 3 ? ' · az fotoğraf' : ''}</div></span><b>${KAT[g.r.k]}</b></div></li>`).join('')}</ul>`;
+  $('ucOut').innerHTML = `<ul class="rows">${L.map(g => `<li><div class="ucrow" style="--k:var(--${g.r.k})"><span class="sc">${Math.round(g.r.top)}</span><span><div class="nm">${esc(g.ad || 'Yeni bina')}</div><div class="ad">${g.foto} fotoğraf · hasar ${f1(g.cov)}% · ${g.yil}${g.yilT ? ' (tahmini)' : ''}${g.foto < 3 ? ' · az fotoğraf' : ''}</div></span><b>${KAT[g.r.k]}</b></div></li>`).join('')}</ul>`;
   $('ucAdd').hidden = !L.length; $('ucAdd').textContent = `${L.length} binayı haritaya ekle`;
 }
 function ucusEkle() {
@@ -160,7 +161,7 @@ function ucusEkle() {
   const gun = new Date().toLocaleDateString('tr-TR'), mevcut = arr.filter(r => /^Bina \d+/.test(r.ad || '')).length;
   L.forEach((g, i) => arr.push({
     ad: g.ad || ('Bina ' + (mevcut + i + 1)), adres: g.adr, mahalle: 'Uçuş ' + gun, enlem: +g.c.lat.toFixed(6), boylam: +g.c.lon.toFixed(6),
-    yil: g.yil, yil_tahmin: g.yilT, kat: g.kat, pga: g.pga, kapsama_yuzde: +g.cov.toFixed(2), catlak_ort: +g.n.toFixed(2), foto: g.foto, tarih: gun, kaynak: 'ucus'
+    yil: g.yil, yil_tahmin: g.yilT, kat: g.kat, pga: g.pga, kapsama_yuzde: +g.cov.toFixed(2), catlak_ort: +g.n.toFixed(2), sinif: g.sinif ? Object.fromEntries(Object.entries(g.sinif).map(([k, v]) => [k, +v.toFixed(2)])) : undefined, foto: g.foto, tarih: gun, kaynak: 'ucus'
   }));
   try { localStorage.setItem(DATA_KEY, JSON.stringify({ binalar: arr })); } catch (e) { toast('Cihaz belleği dolu, veriyi kaydedemedim.'); return; }
   const r = listeyiHazirla(arr);

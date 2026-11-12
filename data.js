@@ -1,4 +1,4 @@
-/* Risktaki Bina: skor formülü, örnek veri ve veri yükleme.
+/* Riskteki Bina: skor formülü, örnek veri ve veri yükleme.
    Formül risk_skor.py ile aynıdır. */
 
 function catlakSkoru(cov, n) { return 40 * (0.6 * Math.min(1, cov / 15) + 0.4 * Math.min(1, n / 5)); }
@@ -36,17 +36,25 @@ const f1 = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
 /* Skorun nedenleri: bina kartında ve raporda aynı metin kullanılır */
 function nedenler(b) {
   const tehTxt = b.pga >= 0.55 ? 'Yüksek tehlike bölgesi' : b.pga >= 0.45 ? 'Orta-yüksek tehlike bölgesi' : b.pga >= 0.3 ? 'Orta tehlike bölgesi' : 'Düşük-orta tehlike bölgesi';
+  const dag = sinifDokumu(b);
   const catTxt = (b.cov != null && b.n != null)
-    ? `${b.foto || '?'} fotoğrafta, fotoğraf başına ortalama ${f1(b.n)} çatlak bulundu. Görüntü alanının %${f1(b.cov)}’i çatlaklı.`
-    : 'Çatlak skoru dosyadaki değerden alındı, ayrıntı verilmemiş.';
+    ? `${b.foto || '?'} fotoğrafta, fotoğraf başına ortalama ${f1(b.n)} hasar bulgusu (çatlak, beton kopması, korozyon). Görüntü alanının %${f1(b.cov)}’inde hasar var.${dag ? ' ' + dag : ''}`
+    : 'Hasar skoru dosyadaki değerden alındı, ayrıntı verilmemiş.';
   return [
-    { ad: 'Çatlak', val: b.c, max: 40, txt: catTxt },
+    { ad: 'Yapısal hasar', val: b.c, max: 40, txt: catTxt },
     { ad: 'Deprem tehlikesi', val: b.t, max: 35, txt: `Bölgenin tepe yer ivmesi ${String(b.pga).replace('.', ',')} g. ${tehTxt}.` },
     { ad: 'Bina yaşı', val: b.ya, max: 25, txt: `${b.yil} yapımı${b.yilT ? ' (tahmini, resmî kayıt yok)' : ''}, ${donem(b.yil)}.` }
   ];
 }
+/* Fotoğraf başına ortalama sınıf sayıları: "Çatlak 2,1 · Beton kopması 0,4 ..." */
+function sinifDokumu(b) {
+  const s = b.sinif; if (!s) return '';
+  const ad = { crack: 'Çatlak', spalling: 'Beton kopması', corrosion: 'Korozyon', efflorescence: 'Tuzlanma (skora girmez)' };
+  const parca = Object.keys(ad).filter(k => s[k] > 0).map(k => `${ad[k]} ${f1(s[k])}`);
+  return parca.length ? 'Sınıf başına ortalama: ' + parca.join(', ') + '.' : '';
+}
 function enEtkili(b) {
-  return [['çatlak bulguları', b.c / 40], ['bölgenin deprem tehlikesi', b.t / 35], ['bina yaşı', b.ya / 25]].sort((a, z) => z[1] - a[1])[0][0];
+  return [['yapısal hasar bulguları', b.c / 40], ['bölgenin deprem tehlikesi', b.t / 35], ['bina yaşı', b.ya / 25]].sort((a, z) => z[1] - a[1])[0][0];
 }
 
 /* ---------- yardımcılar ---------- */
@@ -114,6 +122,7 @@ function normalizeBina(raw, i) {
     mh: String(raw.mh || raw.mahalle || 'Mahalle belirtilmemiş'),
     yil: Math.round(yil), kat: num(raw.kat), pga, lat, lon,
     cov: num(raw.cov ?? raw.kapsama_yuzde), n: num(raw.n ?? raw.catlak_ort),
+    sinif: raw.sinif && typeof raw.sinif === 'object' ? raw.sinif : null,
     c0: num(raw.catlak_skoru), foto: num(raw.foto ?? raw.goruntu_sayisi) || 0, tarih: String(raw.tarih || ''),
     yilT: !!(raw.yil_tahmin), _st: raw._st,
     kanit: typeof raw.kanit === 'string' && raw.kanit.startsWith('data:image/') ? raw.kanit : null
