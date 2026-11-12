@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Riskteki Bina: drone uçuşunu otomatik işler.
 
-Klasördeki fotoğraflar -> konuma göre binalara ayrılır -> gökyazü, ağaç ve zemin
+Klasördeki fotoğraflar -> konuma göre binalara ayrılır -> gökyüzü, ağaç ve zemin
 elenir (yalnızca duvar taranır) -> hasar tespiti (çatlak, beton kopması, korozyon, tuzlanma) -> bina bilgisi (OpenStreetMap,
 belediye CSV'si) -> risk skoru -> binalar.json (uygulamaya "Veri yükle" ile verilir).
 
@@ -97,7 +97,7 @@ def grupla(fotolar, yaricap):
             en['lat'] += (f['lat'] - en['lat']) / k; en['lon'] += (f['lon'] - en['lon']) / k
     return gr
 
-# ---- duvar maskesi: gökyazü, bitki, zemin dışında ----
+# ---- duvar maskesi: gökyüzü, bitki, zemin dışarıda ----
 def duvar_maskesi(bgr):
     """Klasik yöntem (ek paket gerekmez). 1 = duvar adayı. Daha iyisi için --seg."""
     h, w = bgr.shape[:2]
@@ -162,7 +162,7 @@ def tespit(model, bgr, maske, conf, kare=640, adim=480, min_duvar=0.6):
     return [(kutular[i], skorlar[i], siniflar[i]) for i in keep]
 
 def kucuk_resim(im, genislik=640, kalite=70):
-    """İşaretli fotoğrafı küçültp data URI yapar: binalar.json içinde taşınır, ayrı dosya gerekmez."""
+    """İşaretli fotoğrafı küçültüp data URI yapar: binalar.json içinde taşınır, ayrı dosya gerekmez."""
     h, w = im.shape[:2]; s = genislik / w
     k = cv2.resize(im, (genislik, int(h * s)), interpolation=cv2.INTER_AREA) if s < 1 else im
     ok, buf = cv2.imencode('.jpg', k, [cv2.IMWRITE_JPEG_QUALITY, kalite])
