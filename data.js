@@ -1,20 +1,22 @@
 /* Riskteki Bina: skor formülü, örnek veri ve veri yükleme.
    Formül risk_skor.py ile aynıdır. */
 
-function catlakSkoru(cov, n) { return 40 * (0.6 * Math.min(1, cov / 15) + 0.4 * Math.min(1, n / 5)); }
-function tehlikeSkoru(pga) { return 35 * Math.max(0, Math.min(1, (pga - 0.05) / 0.75)); }
+function catlakSkoru(cov, n) { return 35 * (0.6 * Math.min(1, cov / 15) + 0.4 * Math.min(1, n / 5)); }
+function tehlikeSkoru(pga) { return 30 * Math.max(0, Math.min(1, (pga - 0.05) / 0.75)); }
 function yasSkoru(y) {
   if (y < 1975) return 25;
   if (y < 1998) return 20 - (y - 1975) / 23 * 5;
   if (y < 2018) return 12 - (y - 1998) / 20 * 6;
   return 3;
 }
+/* Kat sayısı: 1-2 kat 0 puan, 8 ve üzeri 10 puan, arası doğrusal. Kayıt yoksa 5 puan varsayılır. Ağırlık takım kararıdır. */
+function katSkoru(k) { if (k == null || !isFinite(k)) return 5; return 10 * Math.max(0, Math.min(1, (k - 2) / 6)); }
 function hesapla(b) {
   const hasCN = b.cov != null && b.n != null;
-  const c = hasCN ? catlakSkoru(b.cov, b.n) : (b.c0 != null ? b.c0 : 0);
-  const t = tehlikeSkoru(b.pga), ya = yasSkoru(b.yil);
-  const top = Math.round((c + t + ya) * 10) / 10;
-  return { c, t, ya, top, k: top <= 40 ? 'low' : top <= 70 ? 'mid' : 'high' };
+  const c = hasCN ? catlakSkoru(b.cov, b.n) : (b.c0 != null ? Math.min(35, b.c0 * 35 / 40) : 0);
+  const t = tehlikeSkoru(b.pga), ya = yasSkoru(b.yil), kt = katSkoru(b.kat);
+  const top = Math.round((c + t + ya + kt) * 10) / 10;
+  return { c, t, ya, kt, top, k: top <= 40 ? 'low' : top <= 70 ? 'mid' : 'high' };
 }
 
 const KAT = { low: 'Düşük', mid: 'Orta', high: 'Yüksek' };
@@ -41,9 +43,10 @@ function nedenler(b) {
     ? `${b.foto || '?'} fotoğrafta, fotoğraf başına ortalama ${f1(b.n)} hasar bulgusu (çatlak, beton kopması, korozyon). Görüntü alanının %${f1(b.cov)}’inde hasar var.${dag ? ' ' + dag : ''}`
     : 'Hasar skoru dosyadaki değerden alındı, ayrıntı verilmemiş.';
   return [
-    { ad: 'Yapısal hasar', val: b.c, max: 40, txt: catTxt },
-    { ad: 'Deprem tehlikesi', val: b.t, max: 35, txt: `Bölgenin tepe yer ivmesi ${String(b.pga).replace('.', ',')} g. ${tehTxt}.` },
-    { ad: 'Bina yaşı', val: b.ya, max: 25, txt: `${b.yil} yapımı${b.yilT ? ' (tahmini, resmî kayıt yok)' : ''}, ${donem(b.yil)}.` }
+    { ad: 'Yapısal hasar', val: b.c, max: 35, txt: catTxt },
+    { ad: 'Deprem tehlikesi', val: b.t, max: 30, txt: `Bölgenin tepe yer ivmesi ${String(b.pga).replace('.', ',')} g. ${tehTxt}.` },
+    { ad: 'Bina yaşı', val: b.ya, max: 25, txt: `${b.yil} yapımı${b.yilT ? ' (tahmini, resmî kayıt yok)' : ''}, ${donem(b.yil)}.` },
+    { ad: 'Kat sayısı', val: b.kt, max: 10, txt: b.kat != null ? `${b.kat} katlı. 1-2 kat 0, 8 ve üzeri 10 puan.` : 'Kat sayısı kayıtta yok, ortalama değer (5 puan) varsayıldı.' }
   ];
 }
 /* Fotoğraf başına ortalama sınıf sayıları: "Çatlak 2,1 · Beton kopması 0,4 ..." */
@@ -54,7 +57,7 @@ function sinifDokumu(b) {
   return parca.length ? 'Sınıf başına ortalama: ' + parca.join(', ') + '.' : '';
 }
 function enEtkili(b) {
-  return [['yapısal hasar bulguları', b.c / 40], ['bölgenin deprem tehlikesi', b.t / 35], ['bina yaşı', b.ya / 25]].sort((a, z) => z[1] - a[1])[0][0];
+  return [['yapısal hasar bulguları', b.c / 35], ['bölgenin deprem tehlikesi', b.t / 30], ['bina yaşı', b.ya / 25], ['kat sayısı', b.kt / 10]].sort((a, z) => z[1] - a[1])[0][0];
 }
 
 /* ---------- yardımcılar ---------- */

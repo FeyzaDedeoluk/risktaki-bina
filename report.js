@@ -75,37 +75,36 @@ async function tekBinaRaporu(b, canvas) {
   c.fillStyle = RC.mut; c.font = `400 26px ${RF}`;
   wrapText(c, 'Skoru en çok etkileyen: ' + enEtkili(b) + '.', tx, y + 4, W - M - tx, 36);
   // skorun dağılımı
-  y = 700;
+  y = 670;
   c.fillStyle = RC.ink; c.font = `700 34px ${RF}`; c.fillText('Skor neden böyle çıktı?', M, y);
-  y += 30;
+  y += 20;
   nedenler(b).forEach(n => {
-    y += 40;
+    y += 36;
     c.fillStyle = RC.ink; c.font = `600 27px ${RF}`; c.fillText(n.ad, M, y);
     c.textAlign = 'right'; c.font = `500 26px ${RF}`; c.fillText(f1(n.val) + ' / ' + n.max, W - M, y); c.textAlign = 'left';
-    y += 16; rrect(c, M, y, W - 2 * M, 16, 8); c.fillStyle = RC.soft; c.fill();
-    rrect(c, M, y, Math.max(16, (W - 2 * M) * n.val / n.max), 16, 8); c.fillStyle = RC.acc; c.fill();
-    y += 46; c.fillStyle = RC.mut; c.font = `400 23px ${RF}`;
-    y = wrapText(c, n.txt, M, y, W - 2 * M, 32) + 4;
+    y += 12; rrect(c, M, y, W - 2 * M, 14, 7); c.fillStyle = RC.soft; c.fill();
+    rrect(c, M, y, Math.max(14, (W - 2 * M) * n.val / n.max), 14, 7); c.fillStyle = RC.acc; c.fill();
+    y += 40; c.fillStyle = RC.mut; c.font = `400 23px ${RF}`;
+    y = wrapText(c, n.txt, M, y, W - 2 * M, 31) + 2;
   });
   // bilgiler
   y += 20;
   c.fillStyle = RC.ink; c.font = `700 34px ${RF}`; c.fillText('Bina bilgileri', M, y); y += 24;
-  const info = [['Yapım yılı', String(b.yil)], ['Kat sayısı', b.kat != null ? String(b.kat) : 'belirtilmemiş'],
-    ['Deprem ivmesi (PGA)', String(b.pga).replace('.', ',') + ' g'], ['Son tarama', b.tarih || 'belirtilmemiş'],
+  const info = [['Yapım yılı', String(b.yil)], ['Son tarama', b.tarih || 'belirtilmemiş'],
     ['Taranan fotoğraf', b.foto ? String(b.foto) : '-'], ['Konum', b.lat.toFixed(5) + ', ' + b.lon.toFixed(5)]];
   const cw = (W - 2 * M - 20) / 2;
   info.forEach((it, i) => {
-    const x = M + (i % 2) * (cw + 20), yy = y + Math.floor(i / 2) * 92;
-    rrect(c, x, yy, cw, 78, 12); c.fillStyle = RC.soft; c.fill();
-    c.fillStyle = RC.mut; c.font = `500 20px ${RF}`; c.fillText(it[0].toUpperCase(), x + 20, yy + 30);
-    c.fillStyle = RC.ink; c.font = `600 28px ${RF}`; c.fillText(fitText(c, it[1], cw - 40), x + 20, yy + 62);
+    const x = M + (i % 2) * (cw + 20), yy = y + Math.floor(i / 2) * 82;
+    rrect(c, x, yy, cw, 68, 12); c.fillStyle = RC.soft; c.fill();
+    c.fillStyle = RC.mut; c.font = `500 20px ${RF}`; c.fillText(it[0].toUpperCase(), x + 20, yy + 27);
+    c.fillStyle = RC.ink; c.font = `600 28px ${RF}`; c.fillText(fitText(c, it[1], cw - 40), x + 20, yy + 56);
   });
-  y += 3 * 92 + 24;
+  y += 2 * 82 + 32;
   // öneri
   c.fillStyle = RC.ink; c.font = `700 34px ${RF}`; c.fillText('Önerilen işlem', M, y); y += 20;
-  const hh = 110; rrect(c, M, y, W - 2 * M, hh, 14); c.fillStyle = colBg; c.fill();
+  const hh = 92; rrect(c, M, y, W - 2 * M, hh, 14); c.fillStyle = colBg; c.fill();
   c.fillStyle = col; c.fillRect(M, y, 8, hh);
-  c.fillStyle = RC.ink; c.font = `500 26px ${RF}`; wrapText(c, ISLEM[b.k], M + 32, y + 46, W - 2 * M - 64, 38);
+  c.fillStyle = RC.ink; c.font = `500 26px ${RF}`; wrapText(c, ISLEM[b.k], M + 32, y + 40, W - 2 * M - 64, 36);
   raporAltBilgi(c);
 }
 
