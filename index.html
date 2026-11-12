@@ -49,7 +49,7 @@
     <div class="mcard" role="dialog" aria-modal="true" aria-labelledby="tTitle">
       <div class="mh"><h2 id="tTitle">Araçlar</h2><button class="iconbtn" data-close aria-label="Kapat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <button class="tool" data-tool="ucus"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13V3M8 7l4-4 4 4"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><circle cx="12" cy="17" r="1.5"/></svg></span><span><b>Uçuş yükle</b><span>Drone fotoğrafları: binalara ayrılır, otomatik analiz edilir</span></span></button>
-      <button class="tool" data-tool="foto"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span><b>Fotoğraf analizi</b><span>Bir bina fotoğrafında çatlakları bul</span></span></button>
+      <button class="tool" data-tool="foto"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span><b>Fotoğraf analizi</b><span>Bir bina fotoğrafında hasarları bul</span></span></button>
       <button class="tool" data-tool="calc"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg></span><span><b>Skor hesaplayıcı</b><span>Değerleri gir, risk skorunu gör</span></span></button>
       <button class="tool" data-tool="liste"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M9 8h3"/></svg></span><span><b>Yüksek riskli binalar raporu</b><span>Tek sayfalık özet, PDF veya resim</span></span></button>
       <button class="tool" data-tool="veri"><span class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg></span><span><b>Veri yükle</b><span>risk_skor.py’nin ürettiği JSON dosyası</span></span></button>
@@ -63,26 +63,26 @@
     <div class="mcard" role="dialog" aria-modal="true" aria-labelledby="mTitle">
       <div class="mh"><h2 id="mTitle">Skor hesaplayıcı</h2><button class="iconbtn" data-close aria-label="Kapat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="res" id="res"></div>
-      <section class="fac"><div class="fh"><b>Çatlak</b><span id="fC"></span></div><div class="fbar"><i id="bC"></i></div>
+      <section class="fac"><div class="fh"><b>Yapısal hasar</b><span id="fC"></span></div><div class="fbar"><i id="bC"></i></div>
         <div class="ctrl"><label for="cCov">Kapsama oranı <output id="oCov"></output></label><input type="range" id="cCov" min="0" max="20" step="0.5" value="4"></div>
-        <div class="ctrl"><label for="cN">Fotoğraf başına çatlak <output id="oN"></output></label><input type="range" id="cN" min="0" max="8" step="0.5" value="2"></div></section>
+        <div class="ctrl"><label for="cN">Fotoğraf başına hasar bulgusu <output id="oN"></output></label><input type="range" id="cN" min="0" max="8" step="0.5" value="2"></div></section>
       <section class="fac"><div class="fh"><b>Deprem tehlikesi</b><span id="fT"></span></div><div class="fbar"><i id="bT"></i></div>
         <div class="ctrl"><label for="cPga">Tepe yer ivmesi (PGA) <output id="oPga"></output></label><input type="range" id="cPga" min="0.05" max="0.9" step="0.01" value="0.45"><small>AFAD Türkiye Deprem Tehlike Haritası değeri</small></div></section>
       <section class="fac"><div class="fh"><b>Bina yaşı</b><span id="fY"></span></div><div class="fbar"><i id="bY"></i></div>
         <div class="ctrl"><label for="cYil">Yapım yılı</label><input type="number" id="cYil" min="1900" max="2026" value="1988"><small>Yönetmelik dönemleri: 1975, 1998, 2018</small></div></section>
-      <div class="formula">Çatlak = 40 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; sayı/5))</div>
+      <div class="formula">Hasar = 40 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; sayı/5))</div>
     </div>
   </div>
 
   <div class="modal" id="mPhoto" hidden>
     <div class="mcard" role="dialog" aria-modal="true" aria-labelledby="pTitle">
       <div class="mh"><h2 id="pTitle">Fotoğraf analizi</h2><button class="iconbtn" data-close aria-label="Kapat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <p class="mtxt">Bir bina fotoğrafı seç veya çek. Çatlak tespiti cihazında çalışır, fotoğraf hiçbir yere gönderilmez.</p>
+      <p class="mtxt">Bir bina fotoğrafı seç veya çek. Hasar tespiti cihazında çalışır, fotoğraf hiçbir yere gönderilmez.</p>
       <div class="phbox">
         <label class="filebtn" for="phFile">Fotoğraf seç veya çek<input type="file" id="phFile" accept="image/*"></label>
-        <p class="ph-note" style="background:var(--accent-soft);color:var(--fg);border-radius:12px;padding:9px 12px">İpucu: Çatlağa 1-2 metre yaklaş, çatıyı, gölgeyi ve bacayı kadraja alma. Model yakın plan beton çatlaklarıyla eğitildi.</p>
-        <div class="ctrl" style="margin:0"><label for="phConf">Güven eşiği <output id="oConf"></output></label><input type="range" id="phConf" min="0.1" max="0.9" step="0.05" value="0.5"><small>Yükselt: yanlış alarm azalır. Düşür: daha fazla çatlak bulunur.</small></div>
-        <canvas id="phCanvas" style="touch-action:none;cursor:crosshair" hidden aria-label="Çatlak kutularıyla işaretlenmiş fotoğraf"></canvas>
+        <p class="ph-note" style="background:var(--accent-soft);color:var(--fg);border-radius:12px;padding:9px 12px">İpucu: Hasara 1-2 metre yaklaş, çatıyı, gölgeyi ve bacayı kadraja alma. Model çatlak, beton kopması, korozyon ve tuzlanmayı arar.</p>
+        <div class="ctrl" style="margin:0"><label for="phConf">Güven eşiği <output id="oConf"></output></label><input type="range" id="phConf" min="0.1" max="0.9" step="0.05" value="0.5"><small>Yükselt: yanlış alarm azalır. Düşür: daha fazla hasar bulunur.</small></div>
+        <canvas id="phCanvas" style="touch-action:none;cursor:crosshair" hidden aria-label="Hasar kutularıyla işaretlenmiş fotoğraf"></canvas>
         <div class="actions" id="phBtns" hidden style="margin:0"><button class="btn" id="phRun">Analiz et</button><button class="btn alt" id="phClr">Seçimi temizle</button></div>
         <div class="ph-note" id="phNote" role="status"></div>
         <div id="phOut"></div>
@@ -98,7 +98,7 @@
   <div class="modal" id="mUcus" hidden>
     <div class="mcard" role="dialog" aria-modal="true" aria-labelledby="ucT">
       <div class="mh"><h2 id="ucT">Uçuş yükle</h2><button class="iconbtn" data-close aria-label="Kapat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <p class="mtxt">Uçuştaki bütün fotoğrafları seç. Konumlarına göre binalara ayrılır, çatlaklar cihazında otomatik taranır, fotoğraflar hiçbir yere gönderilmez.</p>
+      <p class="mtxt">Uçuştaki bütün fotoğrafları seç. Konumlarına göre binalara ayrılır, hasarlar (çatlak, kopma, korozyon) cihazında otomatik taranır, fotoğraflar hiçbir yere gönderilmez.</p>
       <div class="phbox">
         <label class="filebtn" for="ucFiles">Fotoğrafları seç<input type="file" id="ucFiles" accept="image/jpeg,image/*" multiple></label>
         <div class="ph-note" id="ucInfo" role="status"></div>
