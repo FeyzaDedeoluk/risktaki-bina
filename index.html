@@ -70,7 +70,9 @@
         <div class="ctrl"><label for="cPga">Tepe yer ivmesi (PGA) <output id="oPga"></output></label><input type="range" id="cPga" min="0.05" max="0.9" step="0.01" value="0.45"><small>AFAD Türkiye Deprem Tehlike Haritası değeri</small></div></section>
       <section class="fac"><div class="fh"><b>Bina yaşı</b><span id="fY"></span></div><div class="fbar"><i id="bY"></i></div>
         <div class="ctrl"><label for="cYil">Yapım yılı</label><input type="number" id="cYil" min="1900" max="2026" value="1988"><small>Yönetmelik dönemleri: 1975, 1998, 2018</small></div></section>
-      <div class="formula">Hasar = 40 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; sayı/5))</div>
+      <section class="fac"><div class="fh"><b>Kat sayısı</b><span id="fK"></span></div><div class="fbar"><i id="bK"></i></div>
+        <div class="ctrl"><label for="cKat">Kat sayısı</label><input type="number" id="cKat" min="1" max="40" placeholder="bilinmiyor"><small>Boş bırakırsan 5 puan sayılır. 1-2 kat 0, 8 ve üzeri 10 puan</small></div></section>
+      <div class="formula">Hasar = 35 × (0,6 × min(1; kapsama/%15) + 0,4 × min(1; sayı/5))</div>
     </div>
   </div>
 

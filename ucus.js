@@ -139,7 +139,7 @@ async function ucusCalistir() {
       g.sinif = covs.length ? { crack: sn[0] / covs.length, spalling: sn[1] / covs.length, corrosion: sn[2] / covs.length, efflorescence: sn[3] / covs.length } : null;
       const m = (U.csv || []).map(r => ({ r, d: haversine(r, g.c) })).filter(x => x.d <= 40).sort((a, b) => a.d - b.d)[0];
       g.yil = m ? m.r.yil : yilT; g.yilT = !m; g.ad = m && m.r.ad || ''; g.adr = m && m.r.adr || ''; g.kat = m ? m.r.kat : null;
-      g.pga = pga; g.r = hesapla({ cov: g.cov, n: g.n, pga, yil: g.yil });
+      g.pga = pga; g.r = hesapla({ cov: g.cov, n: g.n, pga, yil: g.yil, kat: g.kat });
     }
     $('ucBar').value = 100; $('ucProg').hidden = true;
     ucusSonuc();
