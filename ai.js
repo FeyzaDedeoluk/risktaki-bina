@@ -1,5 +1,5 @@
 /* Fotoğraftan hasar tespiti (çatlak, kopma, korozyon, tuzlanma): model telefonda/tarayıcıda çalışır (ONNX Runtime Web).
-   Model dosyası: model.onnx (YOLOv8 ile eğitilmiş best.pt dosyasından dışa aktarılır). */
+   Model dosyası: model_hasar.onnx (dört sınıflı YOLOv8, best_hasar.pt dosyasından dışa aktarılır). */
 
 const ORT_BASE = window.__ORT_BASE || 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
 const AI = { sess: null, busy: null };
@@ -22,7 +22,7 @@ async function aiYukle() {
   if (AI.sess) return AI.sess;
   if (!AI.busy) {
     AI.busy = (async () => {
-      const res = await fetch('model.onnx').catch(() => null);
+      const res = await fetch('model_hasar.onnx').catch(() => null);
       if (!res || !res.ok) throw new Error('MODEL_YOK');
       const buf = await res.arrayBuffer();
       if (!window.ort) await betikYukle(ORT_BASE + 'ort.min.js');

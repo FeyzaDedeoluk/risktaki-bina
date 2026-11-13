@@ -1,4 +1,4 @@
-const CACHE='risktaki-bina-v5';
+const CACHE='risktaki-bina-v6';
 const FILES=['./','index.html','style.css','data.js','map.js','ai.js','report.js','ui.js','ucus.js','manifest.webmanifest','icon-192-1.png','icon-512.png'];
 const CDN=['unpkg.com','cdn.jsdelivr.net','cdnjs.cloudflare.com','fonts.googleapis.com','fonts.gstatic.com'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(f=>new Request(f,{cache:'reload'})))).then(()=>self.skipWaiting()));});
