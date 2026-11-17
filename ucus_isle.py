@@ -145,6 +145,10 @@ def sinif_no(model, c):
     ad = str(model.names.get(int(c), 'crack')).lower() if hasattr(model, 'names') else 'crack'
     return SINIFLAR.index(ad) if ad in SINIFLAR else 0
 
+# Sınıfa göre güven eşiği çarpanı (sıra: crack, spalling, corrosion, efflorescence). Tam cephe testlerinde kopma, korozyon ve tuzlanma
+# çatlaktan çok daha fazla yanlış alarm verdi; --conf 0,5 iken çatlak 0,6, diğerleri 0,8 olur. Az sayıda görüntüyle seçildi, doğrulanmadı.
+ESIK_CARPAN = [1.2, 1.6, 1.6, 1.6]
+
 def tespit(model, bgr, maske, conf, kare=640, adim=480, min_duvar=0.6):
     import torch, torchvision
     h, w = bgr.shape[:2]
@@ -154,12 +158,14 @@ def tespit(model, bgr, maske, conf, kare=640, adim=480, min_duvar=0.6):
             x0, y0 = min(x, max(0, w - kare)), min(y, max(0, h - kare))
             m = maske[y0:y0 + kare, x0:x0 + kare]
             if m.size == 0 or m.mean() < min_duvar: continue
-            r = model.predict(bgr[y0:y0 + kare, x0:x0 + kare], conf=conf, verbose=False, imgsz=kare)[0]
+            r = model.predict(bgr[y0:y0 + kare, x0:x0 + kare], conf=min(0.95, conf * min(ESIK_CARPAN)), verbose=False, imgsz=kare)[0]
             for bx in r.boxes:
                 x1, y1, x2, y2 = bx.xyxy[0].tolist()
                 cx, cy = int((x1 + x2) / 2) + x0, int((y1 + y2) / 2) + y0
+                sn = sinif_no(model, bx.cls[0])
+                if float(bx.conf[0]) < min(0.95, conf * ESIK_CARPAN[sn]): continue   # sınıfa göre eşik
                 if 0 <= cy < h and 0 <= cx < w and maske[cy, cx]:
-                    kutular.append([x1 + x0, y1 + y0, x2 + x0, y2 + y0]); skorlar.append(float(bx.conf[0])); siniflar.append(sinif_no(model, bx.cls[0]))
+                    kutular.append([x1 + x0, y1 + y0, x2 + x0, y2 + y0]); skorlar.append(float(bx.conf[0])); siniflar.append(sn)
     if not kutular: return []
     t = torch.tensor(kutular); s = torch.tensor(skorlar); c = torch.tensor(siniflar)
     keep = torchvision.ops.batched_nms(t, s, c, 0.45).tolist()   # aynı sınıfta üst üste binenler elenir
