@@ -8,6 +8,11 @@ const AI = { sess: null, busy: null };
 const SINIF_AD = ['Çatlak', 'Beton kopması', 'Korozyon', 'Tuzlanma'];
 const SINIF_RENK = ['#ff3b3b', '#ff9f1c', '#b5651d', '#2ec4ff'];
 const SKORA_GIREN = [0, 1, 2];
+/* Sınıfa göre güven eşiği: tam cephe testlerinde beton kopması, korozyon ve tuzlanma çatlaktan çok daha fazla yanlış alarm verdi
+   (balkon çamaşırı, korkuluk, kapı süsü). Eşik = kaydırıcı değeri × çarpan; varsayılan 0,5'te çatlak 0,6, diğerleri 0,8 olur.
+   Bu ayar az sayıda görüntüyle seçildi, etiketli bir test setiyle doğrulanmadı. */
+const SINIF_CARPAN = [1.2, 1.6, 1.6, 1.6];
+function sinifEsik(conf, cls) { return Math.min(0.95, conf * SINIF_CARPAN[cls || 0]); }
 
 function betikYukle(src) {
   return new Promise((res, rej) => {
@@ -63,7 +68,7 @@ async function aiTespit(img, conf = 0.25, iouEsik = 0.45) {
   let boxes = [];
   for (let i = 0; i < nb; i++) {
     let sc = 0, cls = 0; for (let c = 0; c < nc; c++) { const v = get(4 + c, i); if (v > sc) { sc = v; cls = c; } }
-    if (sc < conf) continue;
+    if (sc < sinifEsik(conf, cls)) continue;
     const bx = get(0, i), by = get(1, i), bw = get(2, i), bh = get(3, i);
     boxes.push({
       x1: Math.max(0, (bx - bw / 2 - dx) / r), y1: Math.max(0, (by - bh / 2 - dy) / r),

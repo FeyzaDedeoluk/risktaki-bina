@@ -353,7 +353,7 @@ function icinde(pt, p) {
 function phBoxes() {
   if (!phRaw) return [];
   const conf = +$('phConf').value;
-  return phRaw.res.boxes.filter(b => b.score >= conf && (!phRaw.poly || icinde({ x: (b.x1 + b.x2) / 2, y: (b.y1 + b.y2) / 2 }, phRaw.poly)));
+  return phRaw.res.boxes.filter(b => b.score >= sinifEsik(conf, b.cls) && (!phRaw.poly || icinde({ x: (b.x1 + b.x2) / 2, y: (b.y1 + b.y2) / 2 }, phRaw.poly)));
 }
 function phDraw() {
   if (!phImg) return;
@@ -418,7 +418,7 @@ async function phAnaliz() {
   } catch (err) {
     $('phNote').className = 'ph-err';
     $('phNote').textContent = err.message === 'MODEL_YOK'
-      ? 'Model dosyası (model.onnx) uygulamada yok. Ekibin eğitilmiş modeli depoya eklenince bu özellik çalışır.'
+      ? 'Model dosyası (model_hasar.onnx) uygulamada yok. Ekibin eğitilmiş modeli depoya eklenince bu özellik çalışır.'
       : String(err.message).startsWith('BETIK') ? 'Model çalıştırıcısı yüklenemedi. İnternet bağlantını kontrol et.'
       : 'Analiz yapılamadı: ' + err.message;
   }
