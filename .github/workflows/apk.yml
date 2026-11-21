@@ -23,8 +23,8 @@ jobs:
       - name: Web dosyalarını hazırla
         run: |
           mkdir -p www
-          cp index.html style.css data.js map.js ai.js report.js ui.js manifest.webmanifest sw.js icon-192-1.png icon-512.png www/
-          cp model.onnx www/ || true
+          cp index.html style.css data.js map.js ai.js report.js ui.js ucus.js manifest.webmanifest sw.js icon-192-1.png icon-512.png www/
+          cp model_hasar.onnx www/
           cp binalar.json www/ || true
 
       - name: Capacitor ile Android projesi oluştur
